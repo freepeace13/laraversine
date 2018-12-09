@@ -1,0 +1,21 @@
+{
+    "name": "freepeace13/laraversine",
+    "type": "library",
+    "description": "",
+    "keywords": [],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kin Basco",
+            "email": "freepeace13@gmail.com",
+            "homepage": "https://github.com/freepeace13"
+        }
+    ],
+    "require": {
+      "php": ">=7.1.3",
+      "illuminate/support": "5.7.*"
+    },
+    "require-dev": {
+      "phpunit/phpunit": "^7.0"
+    }
+}
