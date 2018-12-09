@@ -16,6 +16,10 @@ class LaraversineServiceProvider extends ServiceProvider
     $this->publishes([
       __DIR__.'/../config/laraversine.php' => config_path('laraversine.php')
     ], 'laraversine');
+
+    $this->loadMigrationsFrom(
+      __DIR__.'../database/migrations'
+    );
   }
 
   /**
