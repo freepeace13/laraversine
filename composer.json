@@ -1,8 +1,8 @@
 {
     "name": "freepeace13/laraversine",
     "type": "library",
-    "description": "",
-    "keywords": [],
+    "description": "Find the nearest destinations in Laravel using the haversine formula.",
+    "keywords": ["laravel", "haversine", "geolocation", "nearby", "eloquent"],
     "license": "MIT",
     "authors": [
         {
@@ -12,29 +12,34 @@
         }
     ],
     "require": {
-      "php": ">=7.1.3",
-      "illuminate/support": "5.7.*",
-      "illuminate/database": "^5.7"
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/database": "^11.0|^12.0"
     },
     "require-dev": {
-      "phpunit/phpunit": "^7.0",
-      "orchestra/testbench": "^3.7"
+        "phpunit/phpunit": "^10.5|^11.0",
+        "orchestra/testbench": "^9.0|^10.0"
     },
     "autoload": {
-      "psr-4": {
-        "Laraversine\\": "src/"
-      }
+        "psr-4": {
+            "Laraversine\\": "src/"
+        }
     },
     "autoload-dev": {
-      "psr-4": {
-        "Laraversine\\Test\\": "tests"
-      }
+        "psr-4": {
+            "Laraversine\\Test\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
     },
     "extra": {
-      "laravel": {
-        "providers": [
-          "Laraversine\\LaraversineServiceProvider"
-        ]
-      }
-    }
+        "laravel": {
+            "providers": [
+                "Laraversine\\LaraversineServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
