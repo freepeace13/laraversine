@@ -101,8 +101,33 @@ class Destination extends Model
         return $query->orderBy('distance');
     }
 
+    /**
+     * The "distance" attribute as a Distance carrying its unit, or null when
+     * the model was not loaded through nearby().
+     */
+    public function distance(): ?Distance
+    {
+        $value = $this->getAttributes()['distance'] ?? null;
+
+        return $value === null ? null : new Distance((float) $value, static::unit());
+    }
+
+    /**
+     * Keep "$model->distance" returning the raw attribute (or null) rather
+     * than resolving the distance() method as a relationship.
+     */
+    public function isRelation($key)
+    {
+        return $key !== 'distance' && parent::isRelation($key);
+    }
+
+    protected static function unit(): string
+    {
+        return config('laraversine.search_by', 'km') === 'mile' ? Distance::MILE : Distance::KM;
+    }
+
     protected static function earthRadius(): float
     {
-        return config('laraversine.search_by', 'km') === 'mile' ? 3958.8 : 6371.0;
+        return static::unit() === Distance::MILE ? 3958.8 : 6371.0;
     }
 }

@@ -4,6 +4,7 @@ namespace Laraversine\Test;
 
 use InvalidArgumentException;
 use Laraversine\Destination;
+use Laraversine\Distance;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -60,6 +61,66 @@ class DestinationTest extends TestCase
         $mi = Destination::nearby(self::ORIGIN)->where('name', 'Dest 1')->first()->distance;
 
         $this->assertEqualsWithDelta($km * 0.621371, $mi, 0.01);
+    }
+
+    #[Test]
+    public function distance_accessor_carries_value_and_unit(): void
+    {
+        $model = Destination::nearby(self::ORIGIN)->where('name', 'Dest 1')->first();
+
+        $distance = $model->distance();
+
+        $this->assertInstanceOf(Distance::class, $distance);
+        $this->assertSame(Distance::KM, $distance->unit);
+        $this->assertEqualsWithDelta((float) $model->distance, $distance->value, 0.0000001);
+        $this->assertEquals(['value' => $distance->value, 'unit' => 'km'], $distance->jsonSerialize());
+    }
+
+    #[Test]
+    public function distance_accessor_follows_configured_unit(): void
+    {
+        config(['laraversine.search_by' => 'mile']);
+
+        $distance = Destination::nearby(self::ORIGIN)->where('name', 'Dest 1')->first()->distance();
+
+        $this->assertSame(Distance::MILE, $distance->unit);
+        $this->assertEqualsWithDelta($distance->value * 1.609344, $distance->toKm(), 0.0000001);
+    }
+
+    #[Test]
+    public function distance_accessor_is_null_without_nearby(): void
+    {
+        $model = Destination::first();
+
+        $this->assertNull($model->distance());
+        $this->assertNull($model->distance);
+    }
+
+    #[Test]
+    public function distance_attribute_stays_numeric(): void
+    {
+        $model = Destination::nearby(self::ORIGIN)->first();
+
+        $this->assertIsNumeric($model->distance);
+    }
+
+    #[Test]
+    public function distance_converts_between_units(): void
+    {
+        $distance = new Distance(10.0, Distance::KM);
+
+        $this->assertEqualsWithDelta(6.21371, $distance->toMiles(), 0.0001);
+        $this->assertSame(10.0, $distance->toKm());
+        $this->assertSame('10 km', (string) $distance);
+        $this->assertSame('6.21 mi', (string) new Distance($distance->toMiles(), Distance::MILE));
+    }
+
+    #[Test]
+    public function distance_rejects_unknown_unit(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new Distance(1.0, 'furlong');
     }
 
     #[Test]
