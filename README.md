@@ -123,6 +123,10 @@ composer lint:check  # check only (CI)
 
 See [CHANGELOG.md](CHANGELOG.md).
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). PRs target `main` and use Conventional Commit titles; releases are automated.
+
 ## License
 
 The MIT License (MIT). See [LICENSE](LICENSE).
