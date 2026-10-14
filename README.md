@@ -48,5 +48,9 @@ PostgreSQL and SQLite (SQLite needs `radians`, `cos`, `sin`, `acos` registered).
 
 ```bash
 composer install
-vendor/bin/phpunit
+vendor/bin/phpunit                                   # SQLite (default)
+DB_DRIVER=mysql vendor/bin/phpunit                   # needs a laraversine_test DB, root/root
+DB_DRIVER=pgsql vendor/bin/phpunit                   # needs a laraversine_test DB, postgres/root
 ```
+
+Override `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` as needed.

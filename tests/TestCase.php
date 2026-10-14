@@ -4,10 +4,13 @@ namespace Laraversine\Test;
 
 use Laraversine\Destination;
 use Laraversine\LaraversineServiceProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
+    use RefreshDatabase;
+
     protected function getPackageProviders($app): array
     {
         return [LaraversineServiceProvider::class];
@@ -15,12 +18,30 @@ abstract class TestCase extends Orchestra
 
     protected function defineEnvironment($app): void
     {
+        $driver = getenv('DB_DRIVER') ?: 'sqlite';
+
+        $connections = [
+            'sqlite' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''],
+            'mysql' => [
+                'driver' => 'mysql',
+                'host' => getenv('DB_HOST') ?: '127.0.0.1',
+                'port' => getenv('DB_PORT') ?: '3306',
+                'database' => getenv('DB_DATABASE') ?: 'laraversine_test',
+                'username' => getenv('DB_USERNAME') ?: 'root',
+                'password' => getenv('DB_PASSWORD') ?: 'root',
+            ],
+            'pgsql' => [
+                'driver' => 'pgsql',
+                'host' => getenv('DB_HOST') ?: '127.0.0.1',
+                'port' => getenv('DB_PORT') ?: '5432',
+                'database' => getenv('DB_DATABASE') ?: 'laraversine_test',
+                'username' => getenv('DB_USERNAME') ?: 'postgres',
+                'password' => getenv('DB_PASSWORD') ?: 'root',
+            ],
+        ];
+
         $app['config']->set('database.default', 'testing');
-        $app['config']->set('database.connections.testing', [
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-            'prefix' => '',
-        ]);
+        $app['config']->set('database.connections.testing', $connections[$driver]);
     }
 
     protected function defineDatabaseMigrations(): void
@@ -33,9 +54,11 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         // SQLite has no math functions unless compiled with them; register them.
-        $pdo = $this->app['db']->connection()->getPdo();
-        foreach (['radians' => 'deg2rad', 'cos' => 'cos', 'sin' => 'sin', 'acos' => 'acos'] as $name => $fn) {
-            $pdo->sqliteCreateFunction($name, $fn, 1);
+        $connection = $this->app['db']->connection();
+        if ($connection->getDriverName() === 'sqlite') {
+            foreach (['radians' => 'deg2rad', 'cos' => 'cos', 'sin' => 'sin', 'acos' => 'acos'] as $name => $fn) {
+                $connection->getPdo()->sqliteCreateFunction($name, $fn, 1);
+            }
         }
 
         $this->insertDummyData();
