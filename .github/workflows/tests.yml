@@ -14,6 +14,15 @@ jobs:
         php: ['8.2', '8.3', '8.4']
         laravel: ['11.*', '12.*']
         stability: [prefer-lowest, prefer-stable]
+        include:
+          - laravel: '11.*'
+            testbench: '9.*'
+          - laravel: '12.*'
+            testbench: '10.*'
+
+    env:
+      # Laravel 11 is end-of-life and every release is flagged by advisories.
+      COMPOSER_NO_SECURITY_BLOCKING: 1
 
     name: SQLite - PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.stability }}
 
@@ -28,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "illuminate/support:${{ matrix.laravel }}" "illuminate/database:${{ matrix.laravel }}" --no-interaction --no-update
+          composer require "illuminate/support:${{ matrix.laravel }}" "illuminate/database:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --dev --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
 
       - run: vendor/bin/phpunit
