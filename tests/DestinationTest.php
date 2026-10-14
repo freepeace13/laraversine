@@ -2,7 +2,9 @@
 
 namespace Laraversine\Test;
 
+use InvalidArgumentException;
 use Laraversine\Destination;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 
 class DestinationTest extends TestCase
@@ -58,5 +60,29 @@ class DestinationTest extends TestCase
         $mi = Destination::nearby(self::ORIGIN)->where('name', 'Dest 1')->first()->distance;
 
         $this->assertEqualsWithDelta($km * 0.621371, $mi, 0.01);
+    }
+
+    #[Test]
+    public function within_requires_nearby(): void
+    {
+        $this->expectException(LogicException::class);
+
+        Destination::query()->within(1);
+    }
+
+    #[Test]
+    public function rejects_malformed_coordinates(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Destination::nearby([7.127512]);
+    }
+
+    #[Test]
+    public function rejects_out_of_range_coordinates(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Destination::nearby([95.0, 125.0]);
     }
 }

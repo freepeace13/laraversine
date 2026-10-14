@@ -1,8 +1,24 @@
 {
     "name": "freepeace13/laraversine",
     "type": "library",
-    "description": "Find the nearest destinations in Laravel using the haversine formula.",
-    "keywords": ["laravel", "haversine", "geolocation", "nearby", "eloquent"],
+    "description": "Find the nearest locations in Laravel with Eloquent using the haversine formula. Radius search and distance sorting on MySQL, PostgreSQL and SQLite.",
+    "keywords": [
+        "laravel",
+        "eloquent",
+        "haversine",
+        "geolocation",
+        "geospatial",
+        "nearby",
+        "nearest",
+        "distance",
+        "radius",
+        "latitude",
+        "longitude",
+        "gps",
+        "mysql",
+        "postgresql",
+        "sqlite"
+    ],
     "license": "MIT",
     "authors": [
         {
@@ -18,7 +34,8 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5|^11.0",
-        "orchestra/testbench": "^9.0|^10.0"
+        "orchestra/testbench": "^9.0|^10.0",
+        "laravel/pint": "^1.32"
     },
     "autoload": {
         "psr-4": {
@@ -31,7 +48,9 @@
         }
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit",
+        "lint": "pint",
+        "lint:check": "pint --test"
     },
     "extra": {
         "laravel": {
@@ -41,5 +60,13 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "support": {
+        "issues": "https://github.com/freepeace13/laraversine/issues",
+        "source": "https://github.com/freepeace13/laraversine"
+    },
+    "homepage": "https://github.com/freepeace13/laraversine",
+    "config": {
+        "sort-packages": true
+    }
 }
