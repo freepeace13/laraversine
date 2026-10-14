@@ -132,6 +132,14 @@ class DestinationTest extends TestCase
     }
 
     #[Test]
+    public function nearest_first_requires_nearby(): void
+    {
+        $this->expectException(LogicException::class);
+
+        Destination::query()->nearestFirst();
+    }
+
+    #[Test]
     public function rejects_malformed_coordinates(): void
     {
         $this->expectException(InvalidArgumentException::class);

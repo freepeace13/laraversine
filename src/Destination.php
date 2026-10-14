@@ -94,6 +94,10 @@ class Destination extends Model
      */
     public function scopeNearestFirst(Builder $query): Builder
     {
+        if ((static::$origins[$query->getQuery()] ?? null) === null) {
+            throw new LogicException('nearestFirst() must be called after nearby().');
+        }
+
         return $query->orderBy('distance');
     }
 
