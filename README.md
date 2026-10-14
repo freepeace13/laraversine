@@ -16,6 +16,9 @@ in SQL, with no PostGIS or spatial extension required.
 - MySQL, MariaDB, PostgreSQL and SQLite
 - Composable Eloquent scopes: chain with `where`, `paginate`, `with`, etc.
 
+**See it in action:** [laraversine-demo](https://github.com/freepeace13/laraversine-demo),
+a one-page Laravel app with a radius slider, a km/mile toggle and a Leaflet map.
+
 ## Requirements
 
 - PHP 8.2+
