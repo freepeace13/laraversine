@@ -1,3 +1,8 @@
-vendor/
-.git/
+/vendor/
+/composer.lock
 .phpunit.result.cache
+.phpunit.cache/
+.php-cs-fixer.cache
+.idea/
+.vscode/
+.DS_Store

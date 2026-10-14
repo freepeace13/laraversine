@@ -29,10 +29,16 @@ class Destination extends Model
      */
     public function scopeNearby(Builder $query, array $coordinates, ?float $radius = null): Builder
     {
-        [$lat, $lng] = array_values($coordinates);
+        $coordinates = array_values($coordinates);
 
-        if (! is_numeric($lat) || ! is_numeric($lng)) {
+        if (count($coordinates) !== 2 || ! is_numeric($coordinates[0]) || ! is_numeric($coordinates[1])) {
             throw new InvalidArgumentException('Coordinates must be [latitude, longitude].');
+        }
+
+        [$lat, $lng] = $coordinates;
+
+        if (abs($lat) > 90 || abs($lng) > 180) {
+            throw new InvalidArgumentException('Latitude must be within -90..90 and longitude within -180..180.');
         }
 
         $table = $this->getTable();
@@ -53,7 +59,7 @@ class Destination extends Model
 
         $query->selectRaw("{$expression} AS distance", $bindings);
 
-        static::$origins ??= new WeakMap();
+        static::$origins ??= new WeakMap;
         static::$origins[$query->getQuery()] = [$expression, $bindings];
 
         if ($radius !== null) {

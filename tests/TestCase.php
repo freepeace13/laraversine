@@ -2,9 +2,9 @@
 
 namespace Laraversine\Test;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laraversine\Destination;
 use Laraversine\LaraversineServiceProvider;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
