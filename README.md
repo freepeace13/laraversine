@@ -58,6 +58,22 @@ $nearest->name;
 $nearest->distance; // e.g. 0.0421
 ```
 
+### Distance as a value object
+
+`$model->distance` stays a plain number. Call `distance()` when you also need
+the unit:
+
+```php
+$distance = $nearest->distance(); // Laraversine\Distance, or null without nearby()
+
+$distance->value;       // 0.0421
+$distance->unit;        // 'km' or 'mile', from config('laraversine.search_by')
+$distance->toKm();      // float
+$distance->toMiles();   // float
+(string) $distance;     // "0.04 km"
+json_encode($distance); // {"value":0.0421,"unit":"km"}
+```
+
 `within()` and `nearestFirst()` must come after `nearby()`; `within()` throws a
 `LogicException` otherwise. Invalid coordinates (wrong shape, latitude outside
 -90..90 or longitude outside -180..180) throw an `InvalidArgumentException`.
