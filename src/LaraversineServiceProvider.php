@@ -6,32 +6,23 @@ use Illuminate\Support\ServiceProvider;
 
 class LaraversineServiceProvider extends ServiceProvider
 {
-  /**
-  * Publishes configuration file.
-  *
-  * @return void
-  */
-  public function boot()
-  {
-    $this->publishes([
-      __DIR__.'/../config/laraversine.php' => config_path('laraversine.php')
-    ], 'laraversine');
+    public function boot(): void
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
-    $this->loadMigrationsFrom(
-      __DIR__.'../database/migrations'
-    );
-  }
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/laraversine.php' => config_path('laraversine.php'),
+            ], 'laraversine-config');
 
-  /**
-  * Make config publishment optional by merging the config from the package.
-  *
-  * @return void
-  */
-  public function register()
-  {
-    $this->mergeConfigFrom(
-      __DIR__.'/../config/laraversine.php',
-      'laraversine'
-    );
-  }
+            $this->publishes([
+                __DIR__.'/../database/migrations' => database_path('migrations'),
+            ], 'laraversine-migrations');
+        }
+    }
+
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__.'/../config/laraversine.php', 'laraversine');
+    }
 }
