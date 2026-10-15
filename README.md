@@ -126,6 +126,7 @@ on the PDO connection (see `tests/TestCase.php` for an example).
 composer install
 composer test                                        # SQLite (default)
 DB_DRIVER=mysql vendor/bin/phpunit                   # needs a laraversine_test DB, root/root
+DB_DRIVER=mariadb vendor/bin/phpunit                 # needs a laraversine_test DB, root/root
 DB_DRIVER=pgsql vendor/bin/phpunit                   # needs a laraversine_test DB, postgres/root
 ```
 

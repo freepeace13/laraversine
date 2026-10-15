@@ -70,6 +70,34 @@ jobs:
           DB_DRIVER: mysql
           DB_HOST: 127.0.0.1
 
+  mariadb:
+    runs-on: ubuntu-latest
+    name: MariaDB
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: laraversine_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql
+          coverage: none
+      - run: composer update --prefer-dist --no-interaction --no-progress
+      - run: vendor/bin/phpunit
+        env:
+          DB_DRIVER: mariadb
+          DB_HOST: 127.0.0.1
+
   pgsql:
     runs-on: ubuntu-latest
     name: PostgreSQL
