@@ -2,6 +2,7 @@
 
 namespace Laraversine\Test;
 
+use Illuminate\Support\Facades\Schema;
 use Laraversine\Destination;
 use Laraversine\Test\Support\Store;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,5 +63,13 @@ class GeolocationColumnsTest extends TestCase
         };
 
         $this->assertSame('custom', $model->getGeolocationDriverName());
+    }
+
+    #[Test]
+    public function the_bundled_table_has_a_latitude_longitude_index(): void
+    {
+        $columns = array_column(Schema::getIndexes('destinations'), 'columns');
+
+        $this->assertContains(['latitude', 'longitude'], $columns);
     }
 }
