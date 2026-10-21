@@ -62,6 +62,17 @@ class NearestTest extends TestCase
     }
 
     #[Test]
+    public function ignores_ordering_limit_and_offset_on_the_base_query(): void
+    {
+        $nearest = Destination::orderBy('name', 'desc')->limit(1)->offset(2)->nearest(self::ORIGIN, take: 2);
+
+        $this->assertSame(
+            BruteForce::nearestIds($this->stored(), self::ORIGIN, 2),
+            $nearest->pluck('id')->all(),
+        );
+    }
+
+    #[Test]
     public function stops_widening_at_the_max_radius(): void
     {
         DB::enableQueryLog();

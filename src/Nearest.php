@@ -44,7 +44,12 @@ final class Nearest
         $radius = min($initial, $ceiling);
 
         while (true) {
+            // The caller's ordering and paging would change which rows count as
+            // the nearest, so each round starts without them.
             $results = (clone $this->base)
+                ->reorder()
+                ->offset(null)
+                ->limit(null)
                 ->nearby($this->origin->toArray(), $radius)
                 ->nearestFirst()
                 ->limit($this->take)
