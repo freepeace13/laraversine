@@ -1,7 +1,7 @@
 {
     "name": "freepeace13/laraversine",
     "type": "library",
-    "description": "Find the nearest locations in Laravel with Eloquent using the haversine formula. Radius search and distance sorting on MySQL, PostgreSQL and SQLite.",
+    "description": "Find the nearest locations in Laravel with Eloquent using the haversine formula. Fast bounded radius and nearest-record search on MySQL, MariaDB, PostgreSQL and SQLite.",
     "keywords": [
         "laravel",
         "eloquent",
@@ -16,6 +16,7 @@
         "longitude",
         "gps",
         "mysql",
+        "mariadb",
         "postgresql",
         "sqlite"
     ],
@@ -28,13 +29,13 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^11.0|^12.0",
-        "illuminate/database": "^11.0|^12.0"
+        "php": "^8.3",
+        "illuminate/support": "^12.0|^13.0",
+        "illuminate/database": "^12.0|^13.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.5|^11.0",
-        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^10.5|^11.0|^12.0",
+        "orchestra/testbench": "^10.0|^11.0",
         "laravel/pint": "^1.25"
     },
     "autoload": {
@@ -50,7 +51,8 @@
     "scripts": {
         "test": "phpunit",
         "lint": "pint",
-        "lint:check": "pint --test"
+        "lint:check": "pint --test",
+        "bench": "phpunit -c benchmarks/phpunit.xml"
     },
     "extra": {
         "laravel": {
