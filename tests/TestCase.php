@@ -64,7 +64,7 @@ abstract class TestCase extends Orchestra
         // SQLite has no math functions unless compiled with them; register them.
         $connection = $this->app['db']->connection();
         if ($connection->getDriverName() === 'sqlite') {
-            foreach (['radians' => 'deg2rad', 'cos' => 'cos', 'sin' => 'sin', 'acos' => 'acos'] as $name => $fn) {
+            foreach (['radians' => 'deg2rad', 'cos' => 'cos', 'sin' => 'sin', 'acos' => 'acos', 'asin' => 'asin', 'sqrt' => 'sqrt'] as $name => $fn) {
                 $connection->getPdo()->sqliteCreateFunction($name, $fn, 1);
             }
         }
