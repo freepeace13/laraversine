@@ -24,5 +24,7 @@ class LaraversineServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/laraversine.php', 'laraversine');
+
+        $this->app->singleton(SearchManager::class, fn ($app) => new SearchManager($app));
     }
 }
