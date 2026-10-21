@@ -66,7 +66,8 @@ abstract class TestCase extends Orchestra
         $connection = $this->app['db']->connection();
         if ($connection->getDriverName() === 'sqlite') {
             foreach (['radians' => 'deg2rad', 'cos' => 'cos', 'sin' => 'sin', 'acos' => 'acos', 'asin' => 'asin', 'sqrt' => 'sqrt'] as $name => $fn) {
-                $connection->getPdo()->sqliteCreateFunction($name, $fn, 1);
+                // Like native SQL math functions, return NULL for NULL instead of coercing to 0.
+                $connection->getPdo()->sqliteCreateFunction($name, fn ($value) => $value === null ? null : $fn($value), 1);
             }
         }
 
