@@ -1,0 +1,23 @@
+# Databases for the benchmarks. Then, for example:
+#   DB_DRIVER=mysql   DB_HOST=127.0.0.1 DB_PORT=3306 composer bench
+#   DB_DRIVER=mariadb DB_HOST=127.0.0.1 DB_PORT=3307 composer bench
+#   DB_DRIVER=pgsql   DB_HOST=127.0.0.1 DB_PORT=5432 composer bench
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laraversine_test
+    ports: ['3306:3306']
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: laraversine_test
+    ports: ['3307:3306']
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: laraversine_test
+    ports: ['5432:5432']
