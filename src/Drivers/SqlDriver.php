@@ -24,10 +24,14 @@ final class SqlDriver implements SearchDriver
         if ($box !== null) {
             $this->applyBox($query, $box);
         } else {
-            // Half the circumference or more: every non-null row qualifies. The
-            // extra kilometre keeps float rounding from dropping the antipode,
-            // while NULL coordinates still fail the comparison.
+            // Half the circumference or more: every row with coordinates
+            // qualifies. The extra kilometre keeps float rounding from dropping
+            // the antipode. NULLs are excluded explicitly because PostgreSQL's
+            // LEAST ignores NULL arguments, which would turn them into matches.
             $radius = Haversine::halfCircumference($unit) + 1.0;
+
+            [$lat, $lng] = Haversine::columns($query);
+            $query->whereRaw("{$lat} IS NOT NULL AND {$lng} IS NOT NULL");
         }
 
         // Inlined (it is a typed float): PDO would bind it as a string, which
