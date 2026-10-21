@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Laraversine is a Laravel package (PHP 8.2+, Laravel 11/12) that adds haversine-based nearby/radius search to Eloquent, computed in SQL on MySQL, MariaDB, PostgreSQL and SQLite.
+Laraversine is a Laravel package (PHP 8.3+, Laravel 12/13) that adds haversine-based nearest/radius search to Eloquent, computed in SQL on MySQL, MariaDB, PostgreSQL and SQLite.
 
 ## Commands
 
@@ -18,14 +18,15 @@ Other databases: set `DB_DRIVER` (`sqlite` | `mysql` | `mariadb` | `pgsql`); `DB
 
 ## Architecture
 
-- `src/Destination.php` holds nearly all logic: the `nearby()`, `within()` and `nearestFirst()` local scopes plus the `distance()` accessor.
-- `nearby()` builds the haversine SQL expression and adds it as a `distance` select. It also records the expression and bindings in a static `WeakMap` keyed by the underlying query builder. `within()` and `nearestFirst()` read that map, which is how they know a `nearby()` call came first and reuse the same expression. Calling either one first throws `LogicException`.
-- SQLite lacks `LEAST`/`GREATEST`, so the expression switches to `min`/`max` based on the driver. The `LEAST/GREATEST` clamp keeps `acos` in range.
-- `within()` inlines the radius as a formatted float instead of binding it, because PDO binds it as a string and SQLite then compares it as greater than any number. Keep it inlined.
-- `isRelation()` is overridden so `$model->distance` returns the raw attribute rather than resolving the `distance()` method as a relationship.
-- `src/Distance.php` is the value object returned by `distance()`. The unit comes from `config('laraversine.search_by')` (`km` or `mile`), which also selects the earth radius.
-- `src/LaraversineServiceProvider.php` merges the config and loads and publishes the `destinations` migration (tags `laraversine-config` and `laraversine-migrations`).
-- Coordinates are always `[latitude, longitude]`.
+- `src/Concerns/HasGeolocation.php` is the trait models use. It provides the `nearby($coordinates, $radius)`, `nearestFirst()` and deprecated `within()` scopes, the `distance()` accessor and the column/driver getters (`latitudeColumn`, `longitudeColumn`, `geolocationDriver` properties, read with `property_exists()` so the trait declares none). `Destination` is just a model that uses it.
+- `nearby()` delegates to a `SearchDriver` (`src/Contracts`) resolved by `SearchManager` (`Laraversine::extend()` adds drivers; default from `config('laraversine.driver')`). The default `Drivers/SqlDriver` adds a `Drivers/BoundingBox` pre-filter and always finishes with the exact haversine check. A driver must never return a row on a bounding box alone.
+- `nearest()` is an Eloquent `Builder` macro registered in the service provider (scopes cannot return `null`). `src/Nearest.php` runs `nearby()` in rounds of doubling radius until it has `take` rows; each round resets the base query's order, limit and offset.
+- `src/Origins.php` is a static `WeakMap` keyed by the underlying query builder. `nearby()` records the origin there, which is how `nearestFirst()` and `within()` know a `nearby()` call came first (otherwise `LogicException`).
+- `src/Haversine.php` builds the true haversine SQL (`least` becomes `min` on SQLite) and owns the earth radii and the unit from `config('laraversine.search_by')` (`km` or `mile`). Radius and bounding-box bounds are inlined as `%.8F` literals because PDO binds them as strings and SQLite then compares them as greater than any number. Keep them inlined.
+- `$model->distance` on a model that did not load the column throws `LogicException` (Eloquent resolves `distance()` as a relationship); use `distance()`, which returns `?Distance` (`src/Distance.php`).
+- `src/LaraversineServiceProvider.php` merges the config, registers the manager and the `nearest` macro, and only publishes the `destinations` migration (tags `laraversine-config`, `laraversine-migrations`); it does not load it.
+- Coordinates are always `[latitude, longitude]` (`src/Coordinates.php` validates them).
+- Tests: `tests/Drivers/SearchDriverContract.php` checks every driver against a brute-force oracle (`tests/Support/BruteForce.php`); `composer bench` runs `benchmarks/`.
 
 ## Workflow
 
