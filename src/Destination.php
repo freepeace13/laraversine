@@ -5,11 +5,14 @@ namespace Laraversine;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
+use Laraversine\Concerns\HasGeolocation;
 use LogicException;
 use WeakMap;
 
 class Destination extends Model
 {
+    use HasGeolocation;
+
     protected $fillable = ['name', 'latitude', 'longitude'];
 
     /** @var WeakMap<\Illuminate\Database\Query\Builder, array>|null */
