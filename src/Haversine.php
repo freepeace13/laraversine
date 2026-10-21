@@ -2,6 +2,8 @@
 
 namespace Laraversine;
 
+use Illuminate\Database\Eloquent\Builder;
+
 final class Haversine
 {
     public const EARTH_RADIUS_KM = 6371.0;
@@ -53,5 +55,34 @@ final class Haversine
             $expression,
             [$origin->latitude, $origin->latitude, $origin->latitude, $origin->longitude, $origin->longitude],
         ];
+    }
+
+    /**
+     * The model's qualified latitude and longitude columns, quoted for the
+     * query's grammar.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function columns(Builder $query): array
+    {
+        $grammar = $query->getQuery()->getGrammar();
+        $model = $query->getModel();
+
+        return [
+            $grammar->wrap($model->getQualifiedLatitudeColumn()),
+            $grammar->wrap($model->getQualifiedLongitudeColumn()),
+        ];
+    }
+
+    /**
+     * sql() for a model query: its own columns and the right least/min.
+     *
+     * @return array{0: string, 1: array<int, float>}
+     */
+    public static function forQuery(Builder $query, Coordinates $origin, string $unit): array
+    {
+        [$lat, $lng] = self::columns($query);
+
+        return self::sql($lat, $lng, $origin, $unit, $query->getConnection()->getDriverName() === 'sqlite');
     }
 }
