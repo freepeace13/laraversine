@@ -20,8 +20,6 @@ class LaraversineServiceProvider extends ServiceProvider
             return (new Nearest($this, Coordinates::from($coordinates), $take, $maxRadius))->get();
         });
 
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/laraversine.php' => config_path('laraversine.php'),
