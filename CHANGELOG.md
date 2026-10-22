@@ -2,6 +2,69 @@
 
 All notable changes to `freepeace13/laraversine` are documented here.
 
+## [2.0.0](https://github.com/freepeace13/laraversine/compare/v1.1.0...v2.0.0) (2026-10-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* nearest(), driver architecture and required radius for 2.0 ([#10](https://github.com/freepeace13/laraversine/issues/10))
+* stop auto-loading the destinations migration
+* move scopes into HasGeolocation and require a radius on nearby()
+* require PHP 8.3 and Laravel 12 or 13
+
+### Features
+
+* add bounding box math for radius pre-filtering ([0e39c73](https://github.com/freepeace13/laraversine/commit/0e39c734947ef7d6b91f3e88b2fbfe1e99ba3cad))
+* add Coordinates value object ([4f1cb68](https://github.com/freepeace13/laraversine/commit/4f1cb688036fda26a16a606a3ac4051dd2a4d0b6))
+* add HasGeolocation trait with configurable columns ([c040b13](https://github.com/freepeace13/laraversine/commit/c040b13adc97ce3bf94b44cfecde91ff3d841737))
+* add Laravel Boost guidelines and skill ([ee9b1c1](https://github.com/freepeace13/laraversine/commit/ee9b1c1fd1937653bcd7dbe84250e14f0246876c))
+* add nearest() with expanding-radius search ([261204b](https://github.com/freepeace13/laraversine/commit/261204b86c0ff9d540dd468965518d2e50f99450))
+* add reproducible benchmarks ([8c8fe4a](https://github.com/freepeace13/laraversine/commit/8c8fe4ae2dd52f922f80c88ff90fff55f2eddd85))
+* add SearchDriver contract and bounded SQL driver ([f700e30](https://github.com/freepeace13/laraversine/commit/f700e30eb6234988f37187e65596aae80b0e62de))
+* add SearchManager, facade and driver configuration ([366b1c5](https://github.com/freepeace13/laraversine/commit/366b1c50dcf242cffb4d8b6142944661cf45ff6a))
+* add true haversine SQL builder ([dc76ac9](https://github.com/freepeace13/laraversine/commit/dc76ac9ccd2da62f35e45f8dfef16c0647570e38))
+* move scopes into HasGeolocation and require a radius on nearby() ([b1f29c7](https://github.com/freepeace13/laraversine/commit/b1f29c702f8bf714a2f5060f93b4a9c942a7d5a7))
+* nearest(), driver architecture and required radius for 2.0 ([#10](https://github.com/freepeace13/laraversine/issues/10)) ([21d41c0](https://github.com/freepeace13/laraversine/commit/21d41c0c80eee43627e8567ee3a140731b3e4621))
+* stop auto-loading the destinations migration ([eb4bb90](https://github.com/freepeace13/laraversine/commit/eb4bb90b0438f5af7f1ecdab16b15d629f2c05d8))
+
+
+### Miscellaneous Chores
+
+* add 1.x branch alias and release-please target branch ([93e23ab](https://github.com/freepeace13/laraversine/commit/93e23abafca256bee6ec546d6153cf10b47b549f))
+* add 1.x release config and merge-up workflow ([1020ced](https://github.com/freepeace13/laraversine/commit/1020ced512710e417a6269711a2cc63cf04cd177))
+* add Claude Code hook, skills and subagents ([140720d](https://github.com/freepeace13/laraversine/commit/140720d08237b14a0ab8d855425f03bc49f4bf21))
+* add CLAUDE.md and ignore .superpowers ([#8](https://github.com/freepeace13/laraversine/issues/8)) ([57ff197](https://github.com/freepeace13/laraversine/commit/57ff197b1fddcaf81990cf4d6d902e8f631c2f17))
+* add laraversine skills, agents and bin scripts ([#21](https://github.com/freepeace13/laraversine/issues/21)) ([333622a](https://github.com/freepeace13/laraversine/commit/333622a8f7850016d59944c7240203c7e5cf55aa))
+* export-ignore .claude and bin from dist archives ([#27](https://github.com/freepeace13/laraversine/issues/27)) ([7ebee61](https://github.com/freepeace13/laraversine/commit/7ebee61626fe4e8b43bce26f299cbb1e369083a2))
+* merge 1.x into 2.x ([2a672c8](https://github.com/freepeace13/laraversine/commit/2a672c81ce6736153ef6f12ae60de4bdb1c72276))
+* merge 1.x into 2.x ([1b76f89](https://github.com/freepeace13/laraversine/commit/1b76f89d0d7faaa0d34b4eddf220b5e196ee1613))
+* merge 1.x into 2.x ([d956e80](https://github.com/freepeace13/laraversine/commit/d956e8097017404c73cfda0f20f515c24ff0b59e))
+* merge 1.x into 2.x ([29fa2bf](https://github.com/freepeace13/laraversine/commit/29fa2bfe5edba36a445bd2aba8d5bef4fd22214d))
+* merge 1.x into 2.x ([7b81683](https://github.com/freepeace13/laraversine/commit/7b81683f668b40b7e39d6b6c297b5dfb897af271))
+* merge 1.x into 2.x ([ea4a06d](https://github.com/freepeace13/laraversine/commit/ea4a06d5212bb7f474901e1800811b9c24c2d466))
+* merge 1.x into 2.x ([0643185](https://github.com/freepeace13/laraversine/commit/064318550d3a94dd849e9651df81a196a4169fc3))
+* merge 1.x into 2.x ([925aac0](https://github.com/freepeace13/laraversine/commit/925aac05e89cc5e2c094071d28bdc80894ac6d62))
+* merge 1.x into 2.x ([45a3945](https://github.com/freepeace13/laraversine/commit/45a3945dda052e26a0c852488397e7fcbc26fd2e))
+* merge 1.x into 2.x ([2a4d777](https://github.com/freepeace13/laraversine/commit/2a4d77748270d03521588e26c4d1e72b0e231395))
+* merge 1.x into 2.x ([b3e545e](https://github.com/freepeace13/laraversine/commit/b3e545e09e463dd8886f71cc603fc017aa32d7cd))
+* merge 2.x into main ([a5d01e5](https://github.com/freepeace13/laraversine/commit/a5d01e53e4533a2dcf18a3ac5fcc8bb11b63b6d4))
+* merge 2.x into main ([66a8d84](https://github.com/freepeace13/laraversine/commit/66a8d844a48ff2a97d503cb9d775f70e59e5be0a))
+* merge 2.x into main ([e9982bb](https://github.com/freepeace13/laraversine/commit/e9982bb569de631db6be945ff4c48ae4dcffb1a4))
+* merge 2.x into main ([0d6b212](https://github.com/freepeace13/laraversine/commit/0d6b212801a97412df1b2b4cec6a511a34828f85))
+* merge 2.x into main ([b32b96c](https://github.com/freepeace13/laraversine/commit/b32b96cd7240abefba9531a7ff9ceef80aa83f4f))
+* merge 2.x into main ([7a4b265](https://github.com/freepeace13/laraversine/commit/7a4b26515010e5a434351aea3802b2b272d0c436))
+* merge 2.x into main ([4aadc01](https://github.com/freepeace13/laraversine/commit/4aadc014a45374bdc6e458225703ded04c241289))
+* merge 2.x into main ([904c4f3](https://github.com/freepeace13/laraversine/commit/904c4f3fd2a27d0b51038951922383b22a115135))
+* merge 2.x into main ([1c24c65](https://github.com/freepeace13/laraversine/commit/1c24c65890ebb303713040a2632ddd8d45a6c34f))
+* merge 2.x into main ([f64b9ac](https://github.com/freepeace13/laraversine/commit/f64b9ace0ec0c5052ff9e1c3b9ded32596e796d3))
+* merge 2.x into main ([166c680](https://github.com/freepeace13/laraversine/commit/166c680721538c4992dba8432adc3e10454502ee))
+* sync main with 2.x ([f9530fc](https://github.com/freepeace13/laraversine/commit/f9530fc52c4276be94851aee10ef8eb29d604ea4))
+
+
+### Build System
+
+* require PHP 8.3 and Laravel 12 or 13 ([c7c1688](https://github.com/freepeace13/laraversine/commit/c7c16888bba9d0b9763f734989047f17e829d810))
+
 ## [1.1.0](https://github.com/freepeace13/laraversine/compare/v1.0.0...v1.1.0) (2026-10-14)
 
 
