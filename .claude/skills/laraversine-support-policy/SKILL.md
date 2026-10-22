@@ -17,9 +17,9 @@ The previous major gets bug fixes for 6 months after the next major ships, then 
 |---|---|---|---|---|---|
 | `main` | Mirrors `2.x` until 3.0 work starts | 8.3+ | 12, 13 | n/a | n/a |
 | `2.x` | Current stable | 8.3+ | 12, 13 | 3.0 release + 6 months | 3.0 release + 12 to 18 months |
-| `1.x` | Maintenance | 8.2+ | 11, 12 | 2.0 release + 6 months | 2.0 release + 12 to 18 months |
+| `1.x` | Maintenance | 8.2+ | 11, 12 | 2027-04-22 | 2027-10-22 to 2028-04-22 |
 
-Concrete dates: TODO, fill in once 2.0 ships. Until then, say "not yet scheduled".
+2.0.0 shipped on 2026-10-22, which sets the `1.x` dates above. The `2.x` dates stay relative until 3.0 ships.
 
 Supported databases on every branch: MySQL, MariaDB, PostgreSQL, SQLite. Exact database versions are an open question; read the CI matrix in `.github/workflows/tests.yml` for what is tested.
 
