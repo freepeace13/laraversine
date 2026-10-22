@@ -10,6 +10,9 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: merge-up
+
 jobs:
   merge-up:
     runs-on: ubuntu-latest
@@ -24,15 +27,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # A release opens the merge-up PR (or refreshes it).
+      # A release or a push to 1.x or 2.x opens the merge-up PR (or refreshes it).
+      # main has nothing to merge up into.
       - name: Open or refresh the merge-up PR
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.ref_name != 'main'
         run: bin/merge-up --from "$BRANCH"
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          BRANCH: ${{ github.event.release.target_commitish }}
+          BRANCH: ${{ github.event.release.target_commitish || github.ref_name }}
 
-      # A push only brings open merge-up PRs up to date, so they never fall behind their base.
+      # Any push also brings the other open merge-up PRs up to date, so they never fall behind their base.
       - name: Refresh open merge-up PRs
         if: github.event_name == 'push'
         run: bin/merge-up --refresh-only
