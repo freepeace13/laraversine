@@ -2,6 +2,23 @@
 
 All notable changes to `freepeace13/laraversine` are documented here.
 
+## [2.0.1](https://github.com/freepeace13/laraversine/compare/v2.0.0...v2.0.1) (2026-10-22)
+
+
+### Miscellaneous Chores
+
+* drop the stale 1.x branch alias from main ([70050e5](https://github.com/freepeace13/laraversine/commit/70050e531287ecb8e07db4531ef7f552812957e9))
+* merge 1.x into 2.x ([f476b66](https://github.com/freepeace13/laraversine/commit/f476b6623910a4d41b5de915bc4074f19127ddfb))
+* merge 1.x into 2.x ([543214d](https://github.com/freepeace13/laraversine/commit/543214d946f95fe89fe8e80cfd0ad8370b388651))
+* merge 1.x into 2.x ([b7e1ae2](https://github.com/freepeace13/laraversine/commit/b7e1ae225961a0ec9d00940c6630a61595836eb6))
+* merge 1.x into 2.x ([f8f3174](https://github.com/freepeace13/laraversine/commit/f8f3174be2985dce09b3f40bccae522aca88ed38))
+* merge 2.x into main ([75b4ecd](https://github.com/freepeace13/laraversine/commit/75b4ecde705272ba18e93009801d48319c341fb3))
+* merge 2.x into main ([59a9f3e](https://github.com/freepeace13/laraversine/commit/59a9f3e0df9f6f7a1acd1c8f48b3a3cc96f6b460))
+* merge 2.x into main ([eaa4bbf](https://github.com/freepeace13/laraversine/commit/eaa4bbf814bdf55fa81d9561bbf7114a8849b5e8))
+* merge 2.x into main ([3c39255](https://github.com/freepeace13/laraversine/commit/3c39255fd3c17a91d075263f221427f627c366b8))
+* merge 2.x into main ([e14da0f](https://github.com/freepeace13/laraversine/commit/e14da0f0d7e437df0ba67d48fae51822afb492af))
+* merge 2.x into main ([70d1e9f](https://github.com/freepeace13/laraversine/commit/70d1e9ffce68f42ec29420f7ff727b0e6df1c2a2))
+
 ## [2.0.0](https://github.com/freepeace13/laraversine/compare/v1.1.0...v2.0.0) (2026-10-22)
 
 
