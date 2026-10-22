@@ -5,7 +5,7 @@ description: Single source of truth for which Laraversine majors, PHP, Laravel a
 
 # Laraversine support policy
 
-Other skills and agents read this file instead of hardcoding versions. Update it when a major ships or a window changes.
+Other skills and agents read this file instead of hardcoding versions. Update it when a major ships or a window changes, and keep the table in `SECURITY.md` in step.
 
 ## Policy
 
