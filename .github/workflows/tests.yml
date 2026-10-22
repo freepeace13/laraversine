@@ -5,6 +5,10 @@ on:
     branches: [main, '1.x', '2.x']
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   sqlite:
     runs-on: ubuntu-latest
