@@ -6,9 +6,12 @@ set -euo pipefail
 branch="${1:-$(git rev-parse --abbrev-ref HEAD)}"
 git fetch -q origin --tags
 
-tag=$(git describe --tags --abbrev=0 "origin/$branch" 2>/dev/null || true)
-if [[ -z "$tag" ]]; then
-  echo "No release tag reachable from origin/$branch" >&2
+# The baseline is the last release on this line, read from the manifest release-please
+# maintains, not the nearest tag (merge-ups bring other majors' tags into reach).
+version=$(git show "origin/$branch:.release-please-manifest.json" | jq -r '.["."]')
+tag="v$version"
+if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+  echo "Tag $tag (from the manifest on origin/$branch) does not exist" >&2
   exit 1
 fi
 

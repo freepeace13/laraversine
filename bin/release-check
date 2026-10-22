@@ -2,6 +2,7 @@
 # Summarise every open release-please PR: version, CI status, and the commits it releases.
 # Usage: bin/release-check
 set -euo pipefail
+git fetch -q origin --tags
 
 prs=$(gh pr list --state open --search "release in:title" --json number,title,baseRefName \
   --jq '.[] | select(.title | startswith("chore(")) | "\(.number)\t\(.baseRefName)\t\(.title)"')
@@ -14,10 +15,13 @@ fi
 while IFS=$'\t' read -r number base title; do
   echo "== #$number ($base) $title"
   gh pr checks "$number" 2>&1 | sed 's/^/   /' || true
-  echo "   commits since the last tag on $base:"
-  tag=$(git describe --tags --abbrev=0 "origin/$base" 2>/dev/null || true)
-  if [[ -n "$tag" ]]; then
-    git log --format='     %s' "$tag..origin/$base"
+  echo "   commits since the last release ($base):"
+  version=$(git show "origin/$base:.release-please-manifest.json" | jq -r '.["."]')
+  tag="v$version"
+  if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+    git log --no-merges --format='     %s' "$tag..origin/$base"
+  else
+    echo "     (tag $tag from the manifest not found)"
   fi
 done <<< "$prs"
 
