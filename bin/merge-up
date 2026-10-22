@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
-# Open merge-up PRs in order: 1.x -> 2.x -> main.
-# Usage: bin/merge-up [--dry-run]
+# Open or refresh merge-up PRs in order: 1.x -> 2.x -> main.
+# Usage: bin/merge-up [--dry-run] [--refresh-only] [--from <branch>]
+#   --dry-run       only report
+#   --refresh-only  bring open merge-up PRs up to date, never open one
+#   --from <branch> only the pair whose head is <branch>
+# The PR head is a throwaway branch, merge/<head>-into-<base>, cut from the base with the head merged in.
+# A PR whose head is the maintained branch itself goes out of date as soon as the previous merge-up lands,
+# and updating it would merge the base back down. Refreshing the throwaway branch merges the base into it instead.
 # Reports conflicts and stops; never resolves them. Merge-up PRs must be merged with a merge commit.
 set -euo pipefail
 
 dry_run=0
-[[ "${1:-}" == "--dry-run" ]] && dry_run=1
+refresh_only=0
+only=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) dry_run=1 ;;
+    --refresh-only) refresh_only=1 ;;
+    --from) only="${2:?--from needs a branch}"; shift ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
 
 branches=(1.x 2.x main)
 git fetch -q origin
@@ -13,10 +29,18 @@ git fetch -q origin
 for i in 0 1; do
   head="${branches[$i]}"
   base="${branches[$((i + 1))]}"
+  [[ -n "$only" && "$only" != "$head" ]] && continue
+
+  work="merge/$head-into-$base"
+  existing=$(gh pr list --base "$base" --head "$work" --state open --json number --jq '.[0].number // empty')
 
   read -r _ ahead < <(git rev-list --left-right --count "origin/$base...origin/$head")
   if [[ "$ahead" == "0" ]]; then
     echo "$head -> $base: nothing to merge"
+    continue
+  fi
+
+  if [[ -z "$existing" && $refresh_only -eq 1 ]]; then
     continue
   fi
 
@@ -25,19 +49,29 @@ for i in 0 1; do
     exit 1
   fi
 
-  existing=$(gh pr list --base "$base" --head "$head" --state open --json number --jq '.[0].number // empty')
-  if [[ -n "$existing" ]]; then
-    echo "$head -> $base: $ahead commit(s), clean, PR #$existing already open"
-  elif [[ $dry_run -eq 1 ]]; then
-    echo "$head -> $base: $ahead commit(s), clean, would open a PR"
+  if [[ $dry_run -eq 1 ]]; then
+    echo "$head -> $base: $ahead commit(s), clean, would ${existing:+refresh PR #$existing}${existing:-open a PR}"
   else
-    gh pr create --base "$base" --head "$head" \
-      --title "chore: merge $head into $base" \
-      --body "Merge-up of \`$head\` into \`$base\`. Merges cleanly.
+    if [[ -n "$existing" ]]; then
+      git checkout -q -B "$work" "origin/$work"
+      git merge -q --no-edit -m "chore: merge $base into $work" "origin/$base"
+    else
+      git checkout -q -B "$work" "origin/$base"
+    fi
+    git merge -q --no-edit -m "chore: merge $head into $base" "origin/$head"
+    git push -q origin "$work"
+
+    if [[ -n "$existing" ]]; then
+      echo "$head -> $base: $ahead commit(s), refreshed PR #$existing"
+    else
+      gh pr create --base "$base" --head "$work" \
+        --title "chore: merge $head into $base" \
+        --body "Merge-up of \`$head\` into \`$base\`. Merges cleanly.
 
 Merge with a merge commit, not squash."
+    fi
   fi
 
   # Do not look at the next pair until this one has merged.
-  break
+  [[ $refresh_only -eq 1 ]] || break
 done
