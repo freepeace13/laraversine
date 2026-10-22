@@ -8,7 +8,7 @@ Laravel 11 and PHP 8.2 are no longer supported. Upgrade to PHP 8.3+ and Laravel 
 
 ### `nearby()` requires a radius
 
-`nearby($coordinates)` without a radius calculated the distance to every row. The radius is now required, and omitting it throws an `ArgumentCountError`.
+`nearby($coordinates)` without a radius calculated the distance to every row. The radius is now required, and omitting it throws an `ArgumentCountError`. A radius of `0` or less now throws an `InvalidArgumentException`; in 1.x `nearby($c, 0)` ran and returned exact matches.
 
 | Before | After |
 |---|---|
@@ -36,7 +36,7 @@ php artisan vendor:publish --tag=laraversine-migrations
 php artisan migrate
 ```
 
-An existing `destinations` table is unaffected.
+An existing `destinations` table is unaffected. If you already have the table, do not publish the migration: it would be copied with a new timestamp and `php artisan migrate` would fail with "table already exists". Note that the old auto-loaded migration is no longer seen by `migrate:status` or `migrate:rollback`.
 
 ### Distances change slightly
 
@@ -62,7 +62,11 @@ class Store extends Model
 }
 ```
 
-Models that already extend `Destination` keep working with only the changes above.
+Models that extend `Destination` keep working with the changes above, with one exception: the protected `static $origins`, `unit()` and `earthRadius()` members were removed. Subclasses that override or call them must switch to `Haversine::unit()` and `Haversine::earthRadius()` (the origin map is now internal).
+
+### Stricter coordinate validation
+
+Coordinates containing `NaN` or `INF` are now rejected, in addition to the existing latitude and longitude range check.
 
 ### Recommended index
 
