@@ -1,0 +1,39 @@
+name: merge-up
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pick the next branch up
+        id: branches
+        run: |
+          case "$BRANCH" in
+            1.x) echo "base=2.x" >> "$GITHUB_OUTPUT" ;;
+            2.x) echo "base=main" >> "$GITHUB_OUTPUT" ;;
+          esac
+        env:
+          BRANCH: ${{ github.event.release.target_commitish }}
+
+      - name: Open the merge-up PR
+        if: steps.branches.outputs.base != ''
+        run: |
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base "$BASE" \
+            --head "$HEAD" \
+            --title "chore: merge $HEAD into $BASE" \
+            --body "Merge-up after release $TAG. Merge with a merge commit, not squash, so history stays connected." \
+            || echo "PR already exists or nothing to merge"
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          BASE: ${{ steps.branches.outputs.base }}
+          HEAD: ${{ github.event.release.target_commitish }}
+          TAG: ${{ github.event.release.tag_name }}
