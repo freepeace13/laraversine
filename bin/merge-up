@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Open merge-up PRs in order: 1.x -> 2.x -> main.
+# Usage: bin/merge-up [--dry-run]
+# Reports conflicts and stops; never resolves them. Merge-up PRs must be merged with a merge commit.
+set -euo pipefail
+
+dry_run=0
+[[ "${1:-}" == "--dry-run" ]] && dry_run=1
+
+branches=(1.x 2.x main)
+git fetch -q origin
+
+for i in 0 1; do
+  head="${branches[$i]}"
+  base="${branches[$((i + 1))]}"
+
+  read -r _ ahead < <(git rev-list --left-right --count "origin/$base...origin/$head")
+  if [[ "$ahead" == "0" ]]; then
+    echo "$head -> $base: nothing to merge"
+    continue
+  fi
+
+  if ! git merge-tree --write-tree "origin/$base" "origin/$head" >/dev/null 2>&1; then
+    echo "$head -> $base: $ahead commit(s), CONFLICTS. Resolve by hand; stopping." >&2
+    exit 1
+  fi
+
+  existing=$(gh pr list --base "$base" --head "$head" --state open --json number --jq '.[0].number // empty')
+  if [[ -n "$existing" ]]; then
+    echo "$head -> $base: $ahead commit(s), clean, PR #$existing already open"
+  elif [[ $dry_run -eq 1 ]]; then
+    echo "$head -> $base: $ahead commit(s), clean, would open a PR"
+  else
+    gh pr create --base "$base" --head "$head" \
+      --title "chore: merge $head into $base" \
+      --body "Merge-up of \`$head\` into \`$base\`. Merges cleanly.
+
+Merge with a merge commit, not squash."
+  fi
+
+  # Do not look at the next pair until this one has merged.
+  break
+done

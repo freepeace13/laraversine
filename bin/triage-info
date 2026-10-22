@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Gather the facts needed to triage a PR and flag mechanical problems.
+# Usage: bin/triage-info <pr-number>
+set -euo pipefail
+
+pr="${1:?usage: bin/triage-info <pr-number>}"
+json=$(gh pr view "$pr" --json title,baseRefName,files)
+title=$(jq -r .title <<<"$json")
+base=$(jq -r .baseRefName <<<"$json")
+files=$(jq -r '.files[].path' <<<"$json")
+
+echo "PR #$pr -> $base"
+echo "Title: $title"
+echo "Files:"
+sed 's/^/  /' <<<"$files"
+echo
+
+if ! grep -Eq '^(feat|fix|perf|refactor|docs|test|build|ci|chore|revert)(\([^)]+\))?!?: .+' <<<"$title"; then
+  echo "! Title is not a Conventional Commit"
+fi
+if grep -Eq '^[a-z]+(\([^)]+\))?!:' <<<"$title" && [[ "$base" != "main" ]]; then
+  echo "! Breaking change (!) should target main, not $base"
+fi
+if grep -Eq '^fix' <<<"$title" && ! grep -q '^tests/' <<<"$files"; then
+  echo "! fix: with no change under tests/"
+fi
+if grep -q '^CHANGELOG.md$' <<<"$files"; then
+  echo "! Edits CHANGELOG.md; release-please owns it"
+fi
+echo "(Public-API impact still needs a judgment call: see the pr-triager agent.)"
