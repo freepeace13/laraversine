@@ -10,4 +10,7 @@ You can expect an acknowledgement within a few days. Once a fix is ready it will
 
 ## Supported versions
 
-The current major receives bug and security fixes. The previous major receives bug fixes for 6 months after the next major ships, then security fixes only for a further 6 to 12 months. See the support table in the [README](README.md) for the versions currently supported.
+The current major receives bug and security fixes. The previous major receives bug fixes for 6 months after the next major ships, then security fixes only for a further 6 to 12 months. | Version | Status | PHP | Laravel | Bug fixes until | Security fixes until |
+|---|---|---|---|---|---|
+| `2.x` | Current | 8.3+ | 12, 13 | 3.0 release + 6 months | 3.0 release + 12 to 18 months |
+| `1.x` | Maintenance | 8.2+ | 11, 12 | 2027-04-22 | 2027-10-22 to 2028-04-22 |
