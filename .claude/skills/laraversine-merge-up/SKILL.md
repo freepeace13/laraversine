@@ -9,6 +9,10 @@ Changes flow `1.x` → `2.x` → `main`. Never merge downward and never cherry-p
 
 `merge-up.yml` opens these PRs when a release is published. Use this skill when one has conflicts, or when a non-release change (docs, CI) needs to ride up.
 
+## Script
+
+`bin/merge-up` does steps 1 to 4 below. `bin/merge-up --dry-run` only reports. It stops at the first pair that has work, and exits non-zero on conflicts. Use the manual steps for conflict resolution.
+
 ## Procedure
 
 For each pair in order (`1.x` into `2.x`, then `2.x` into `main`):

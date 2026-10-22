@@ -7,6 +7,10 @@ description: Use when preparing or reviewing a Laraversine release. Checks CI, r
 
 release-please keeps one release PR open per maintained branch (`chore(<branch>): release X.Y.Z`). **The maintainer merging that PR is the only approval step.** Never merge it yourself and never tag by hand.
 
+## Script
+
+`bin/release-check` lists every open release PR with its CI status and the commits it releases. `bin/bc-diff <branch>` shows the public-surface diff since the last tag.
+
 ## Procedure
 
 1. List release PRs: `gh pr list --search "release in:title" --json number,title,baseRefName`.

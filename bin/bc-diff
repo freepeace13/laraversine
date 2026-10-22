@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Show what changed in the public surface since the last release tag on a branch.
+# Usage: bin/bc-diff [branch]   (default: current branch)
+set -euo pipefail
+
+branch="${1:-$(git rev-parse --abbrev-ref HEAD)}"
+git fetch -q origin --tags
+
+tag=$(git describe --tags --abbrev=0 "origin/$branch" 2>/dev/null || true)
+if [[ -z "$tag" ]]; then
+  echo "No release tag reachable from origin/$branch" >&2
+  exit 1
+fi
+
+echo "Comparing origin/$branch against $tag"
+echo
+git diff --stat "$tag..origin/$branch" -- src config database composer.json
+echo
+git diff "$tag..origin/$branch" -- src config database composer.json

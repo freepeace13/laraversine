@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Summarise every open release-please PR: version, CI status, and the commits it releases.
+# Usage: bin/release-check
+set -euo pipefail
+
+prs=$(gh pr list --state open --search "release in:title" --json number,title,baseRefName \
+  --jq '.[] | select(.title | startswith("chore(")) | "\(.number)\t\(.baseRefName)\t\(.title)"')
+
+if [[ -z "$prs" ]]; then
+  echo "No open release PRs."
+  exit 0
+fi
+
+while IFS=$'\t' read -r number base title; do
+  echo "== #$number ($base) $title"
+  gh pr checks "$number" 2>&1 | sed 's/^/   /' || true
+  echo "   commits since the last tag on $base:"
+  tag=$(git describe --tags --abbrev=0 "origin/$base" 2>/dev/null || true)
+  if [[ -n "$tag" ]]; then
+    git log --format='     %s' "$tag..origin/$base"
+  fi
+done <<< "$prs"
+
+echo
+echo "2.x and main both propose the same version while identical: merge one, close the other."
