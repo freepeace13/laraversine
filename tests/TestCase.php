@@ -55,6 +55,7 @@ abstract class TestCase extends Orchestra
     protected function defineDatabaseMigrations(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
     }
 
     protected function setUp(): void
@@ -64,8 +65,9 @@ abstract class TestCase extends Orchestra
         // SQLite has no math functions unless compiled with them; register them.
         $connection = $this->app['db']->connection();
         if ($connection->getDriverName() === 'sqlite') {
-            foreach (['radians' => 'deg2rad', 'cos' => 'cos', 'sin' => 'sin', 'acos' => 'acos'] as $name => $fn) {
-                $connection->getPdo()->sqliteCreateFunction($name, $fn, 1);
+            foreach (['radians' => 'deg2rad', 'cos' => 'cos', 'sin' => 'sin', 'acos' => 'acos', 'asin' => 'asin', 'sqrt' => 'sqrt'] as $name => $fn) {
+                // Like native SQL math functions, return NULL for NULL instead of coercing to 0.
+                $connection->getPdo()->sqliteCreateFunction($name, fn ($value) => $value === null ? null : $fn($value), 1);
             }
         }
 

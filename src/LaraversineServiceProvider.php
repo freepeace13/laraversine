@@ -2,13 +2,23 @@
 
 namespace Laraversine;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\ServiceProvider;
+use Laraversine\Concerns\HasGeolocation;
+use LogicException;
 
 class LaraversineServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        Builder::macro('nearest', function (array $coordinates, int $take = 1, ?float $maxRadius = null) {
+            /** @var Builder $this */
+            if (! in_array(HasGeolocation::class, class_uses_recursive($this->getModel()), true)) {
+                throw new LogicException(get_class($this->getModel()).' must use '.HasGeolocation::class.' to call nearest().');
+            }
+
+            return (new Nearest($this, Coordinates::from($coordinates), $take, $maxRadius))->get();
+        });
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
@@ -24,5 +34,7 @@ class LaraversineServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/laraversine.php', 'laraversine');
+
+        $this->app->singleton(SearchManager::class, fn ($app) => new SearchManager($app));
     }
 }
