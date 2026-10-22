@@ -135,6 +135,12 @@ Laraversine::extend('my-driver', fn () => new MyDriver);
 A driver must finish with an exact distance check and never return a row only
 because it fell inside a bounding box.
 
+### Laravel Boost
+
+The package ships [Laravel Boost](https://laravel.com/docs/boost) guidelines and a
+`laraversine-search` skill in `resources/boost`. Run `php artisan boost:install`
+to load them into your AI coding assistant.
+
 ## Configuration
 
 `config/laraversine.php`:
