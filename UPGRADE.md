@@ -27,6 +27,8 @@ Destination::nearby($c)->within(2)->get();
 Destination::nearby($c, 2)->get();
 ```
 
+If your test suite turns deprecations into errors, `within()` will fail it until you make that change.
+
 ### The migration is no longer loaded automatically
 
 A fresh install no longer creates a `destinations` table. If you use the bundled `Destination` model, publish the migration:
@@ -37,6 +39,10 @@ php artisan migrate
 ```
 
 An existing `destinations` table is unaffected. If you already have the table, do not publish the migration: it would be copied with a new timestamp and `php artisan migrate` would fail with "table already exists". Note that the old auto-loaded migration is no longer seen by `migrate:status` or `migrate:rollback`.
+
+### Rows without coordinates are never returned
+
+In 1.x, `nearby($c)` without a radius returned every row, including rows with a `NULL` latitude or longitude (their `distance` was `NULL`). `nearby()` now always applies a radius, and rows with a `NULL` latitude or longitude are excluded. If you relied on those rows, query them separately.
 
 ### Distances change slightly
 
@@ -62,7 +68,10 @@ class Store extends Model
 }
 ```
 
-Models that extend `Destination` keep working with the changes above, with one exception: the protected `static $origins`, `unit()` and `earthRadius()` members were removed. Subclasses that override or call them must switch to `Haversine::unit()` and `Haversine::earthRadius()` (the origin map is now internal).
+Models that extend `Destination` keep working with the changes above, with two exceptions:
+
+- The protected `static $origins`, `unit()` and `earthRadius()` members were removed. Subclasses that override or call them must switch to `Haversine::unit()` and `Haversine::earthRadius()` (the origin map is now internal).
+- The scopes now live in the `HasGeolocation` trait. A subclass that overrides `scopeNearby()` or `scopeWithin()` with its 1.x body replaces the new implementation, so it bypasses the search driver and may call the removed members above. Remove the override, or port it to the 2.0 signature `scopeNearby(Builder $query, array $coordinates, float $radius)`.
 
 ### Stricter coordinate validation
 
@@ -75,6 +84,10 @@ Add a composite index so the bounding-box pre-filter can use it:
 ```php
 $table->index(['latitude', 'longitude']);
 ```
+
+### `nearest()` is a macro on every Eloquent builder
+
+`nearest()` is registered with `Builder::macro()`, because a scope cannot return `null`. If your application or another package already defines a `nearest` macro on the Eloquent builder, one of them will override the other. Rename yours.
 
 ### New configuration
 
