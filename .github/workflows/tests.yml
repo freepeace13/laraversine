@@ -6,8 +6,8 @@ on:
   pull_request:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.head.sha || github.sha }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   sqlite:
@@ -129,3 +129,12 @@ jobs:
         env:
           DB_DRIVER: pgsql
           DB_HOST: 127.0.0.1
+
+  # The single check the rulesets require, so the matrix can change without editing them.
+  tests-passed:
+    if: always()
+    needs: [sqlite, mysql, mariadb, pgsql]
+    runs-on: ubuntu-latest
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
