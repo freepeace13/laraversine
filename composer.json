@@ -55,6 +55,9 @@
         "bench": "phpunit -c benchmarks/phpunit.xml"
     },
     "extra": {
+        "branch-alias": {
+            "dev-1.x": "1.x-dev"
+        },
         "laravel": {
             "providers": [
                 "Laraversine\\LaraversineServiceProvider"
