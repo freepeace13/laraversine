@@ -3,6 +3,8 @@ name: merge-up
 on:
   release:
     types: [published]
+  push:
+    branches: [1.x, 2.x, main]
 
 permissions:
   contents: write
@@ -12,28 +14,27 @@ jobs:
   merge-up:
     runs-on: ubuntu-latest
     steps:
-      - name: Pick the next branch up
-        id: branches
-        run: |
-          case "$BRANCH" in
-            1.x) echo "base=2.x" >> "$GITHUB_OUTPUT" ;;
-            2.x) echo "base=main" >> "$GITHUB_OUTPUT" ;;
-          esac
-        env:
-          BRANCH: ${{ github.event.release.target_commitish }}
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
-      - name: Open the merge-up PR
-        if: steps.branches.outputs.base != ''
+      - name: Set up git identity
         run: |
-          gh pr create \
-            --repo "$GITHUB_REPOSITORY" \
-            --base "$BASE" \
-            --head "$HEAD" \
-            --title "chore: merge $HEAD into $BASE" \
-            --body "Merge-up after release $TAG. Merge with a merge commit, not squash, so history stays connected." \
-            || echo "PR already exists or nothing to merge"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # A release opens the merge-up PR (or refreshes it).
+      - name: Open or refresh the merge-up PR
+        if: github.event_name == 'release'
+        run: bin/merge-up --from "$BRANCH"
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          BASE: ${{ steps.branches.outputs.base }}
-          HEAD: ${{ github.event.release.target_commitish }}
-          TAG: ${{ github.event.release.tag_name }}
+          BRANCH: ${{ github.event.release.target_commitish }}
+
+      # A push only brings open merge-up PRs up to date, so they never fall behind their base.
+      - name: Refresh open merge-up PRs
+        if: github.event_name == 'push'
+        run: bin/merge-up --refresh-only
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
