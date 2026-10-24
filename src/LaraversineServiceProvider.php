@@ -5,6 +5,7 @@ namespace Laraversine;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\ServiceProvider;
 use Laraversine\Concerns\HasGeolocation;
+use Laraversine\Console\GeohashCommand;
 use LogicException;
 
 class LaraversineServiceProvider extends ServiceProvider
@@ -21,6 +22,8 @@ class LaraversineServiceProvider extends ServiceProvider
         });
 
         if ($this->app->runningInConsole()) {
+            $this->commands([GeohashCommand::class]);
+
             $this->publishes([
                 __DIR__.'/../config/laraversine.php' => config_path('laraversine.php'),
             ], 'laraversine-config');
