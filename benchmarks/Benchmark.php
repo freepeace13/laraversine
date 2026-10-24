@@ -5,6 +5,7 @@ namespace Laraversine\Benchmarks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Laraversine\Destination;
+use Laraversine\Geohash;
 use Laraversine\Test\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -42,15 +43,17 @@ class Benchmark extends TestCase
                 $this->seedRows($size, $layout);
                 $origins = $this->origins($originCount);
 
-                foreach ($this->scenarios() as [$label, $v1, $v2]) {
+                foreach ($this->scenarios() as [$label, $v1, $v2, $v3]) {
                     [$v1Ms, $v1Rows] = $this->measure($v1, $origins);
                     [$v2Ms, $v2Rows] = $this->measure($v2, $origins);
+                    [$v3Ms, $v3Rows] = $this->measure($v3, $origins);
 
                     $lines[] = sprintf(
-                        '| %s | %s | %s | %.1f | %.1f | %s | %s |',
-                        number_format($size), $layout, $label, $v1Ms, $v2Ms,
+                        '| %s | %s | %s | %.1f | %.1f | %.1f | %s | %s | %s |',
+                        number_format($size), $layout, $label, $v1Ms, $v2Ms, $v3Ms,
                         $v1Rows === null ? 'n/a' : number_format($v1Rows),
                         $v2Rows === null ? 'n/a' : number_format($v2Rows),
+                        $v3Rows === null ? 'n/a' : number_format($v3Rows),
                     );
                     fwrite(STDERR, end($lines)."\n");
                 }
@@ -59,8 +62,8 @@ class Benchmark extends TestCase
 
         $report = "# Benchmark results: {$driver}\n\n"
             ."Median latency over {$originCount} random origins, in milliseconds. Rows examined is approximate.\n\n"
-            ."| Rows | Layout | Query | v1 brute force (ms) | v2 SQL driver (ms) | v1 rows examined | v2 rows examined |\n"
-            ."|---|---|---|---|---|---|---|\n"
+            ."| Rows | Layout | Query | v1 brute force (ms) | v2 SQL driver (ms) | v2 geohash driver (ms) | v1 rows examined | v2 rows examined | geohash rows examined |\n"
+            ."|---|---|---|---|---|---|---|---|---|\n"
             .implode("\n", $lines)."\n";
 
         file_put_contents(__DIR__."/results/{$driver}.md", $report);
@@ -69,7 +72,7 @@ class Benchmark extends TestCase
     }
 
     /**
-     * @return list<array{0: string, 1: callable(array): mixed, 2: callable(array): mixed}>
+     * @return list<array{0: string, 1: callable(array): mixed, 2: callable(array): mixed, 3: callable(array): mixed}>
      */
     private function scenarios(): array
     {
@@ -80,6 +83,7 @@ class Benchmark extends TestCase
                 "nearest(take: {$take})",
                 fn (array $o) => $this->v1Nearest($o, $take),
                 fn (array $o) => Destination::nearest($o, take: $take),
+                fn (array $o) => $this->withDriver('geohash', fn () => Destination::nearest($o, take: $take)),
             ];
         }
 
@@ -88,10 +92,23 @@ class Benchmark extends TestCase
                 "nearby({$radius} km)",
                 fn (array $o) => $this->v1Nearby($o, $radius),
                 fn (array $o) => Destination::nearby($o, $radius)->nearestFirst()->get(),
+                fn (array $o) => $this->withDriver('geohash', fn () => Destination::nearby($o, $radius)->nearestFirst()->get()),
             ];
         }
 
         return $scenarios;
+    }
+
+    private function withDriver(string $driver, callable $run): mixed
+    {
+        $previous = config('laraversine.driver');
+        config(['laraversine.driver' => $driver]);
+
+        try {
+            return $run();
+        } finally {
+            config(['laraversine.driver' => $previous]);
+        }
     }
 
     /** The v1.1 query: the law-of-cosines distance for every row, then sort. */
@@ -206,7 +223,9 @@ class Benchmark extends TestCase
                     ? [rad2deg(asin(2 * mt_rand() / mt_getrandmax() - 1)), 360 * mt_rand() / mt_getrandmax() - 180]
                     : [33 + 5 * mt_rand() / mt_getrandmax(), 126 + 3.5 * mt_rand() / mt_getrandmax()];
 
-                $rows[] = ['name' => "p{$i}", 'latitude' => round($lat, 6), 'longitude' => round($lng, 6)];
+                $lat = round($lat, 6);
+                $lng = round($lng, 6);
+                $rows[] = ['name' => "p{$i}", 'latitude' => $lat, 'longitude' => $lng, 'geohash' => Geohash::encode($lat, $lng)];
             }
 
             DB::table('destinations')->insert($rows);
