@@ -3,10 +3,13 @@
 namespace Laraversine\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use Laraversine\Contracts\SearchDriver;
 use Laraversine\Coordinates;
 use Laraversine\Distance;
+use Laraversine\Geohash;
+use Laraversine\GeohashColumn;
 use Laraversine\Haversine;
 use Laraversine\Origins;
 use Laraversine\SearchManager;
@@ -14,6 +17,40 @@ use LogicException;
 
 trait HasGeolocation
 {
+    /**
+     * Keep the geohash column in sync on save. It only acts when the model's
+     * searches use the geohash driver, so models on the default driver, and
+     * tables without the column, behave exactly as before.
+     */
+    public static function bootHasGeolocation(): void
+    {
+        static::saving(function (Model $model) {
+            if (! $model->usesGeohash()) {
+                return;
+            }
+
+            GeohashColumn::assertFor($model);
+
+            $column = $model->getGeohashColumn();
+            $coordinatesChanged = $model->isDirty([$model->getLatitudeColumn(), $model->getLongitudeColumn()]);
+
+            if (! $coordinatesChanged && ! empty($model->getAttribute($column))) {
+                return;
+            }
+
+            try {
+                $coordinates = Coordinates::from([
+                    $model->getAttribute($model->getLatitudeColumn()),
+                    $model->getAttribute($model->getLongitudeColumn()),
+                ]);
+
+                $model->setAttribute($column, Geohash::encode($coordinates->latitude, $coordinates->longitude));
+            } catch (InvalidArgumentException) {
+                $model->setAttribute($column, null);
+            }
+        });
+    }
+
     public function getLatitudeColumn(): string
     {
         return property_exists($this, 'latitudeColumn') ? $this->latitudeColumn : 'latitude';
