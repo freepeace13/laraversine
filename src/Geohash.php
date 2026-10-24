@@ -67,6 +67,17 @@ final class Geohash
     }
 
     /**
+     * Whether a point lies in the hash's cell, or within $tolerance degrees of it.
+     */
+    public static function contains(string $hash, float $latitude, float $longitude, float $tolerance = 0.0): bool
+    {
+        [$minLat, $maxLat, $minLng, $maxLng] = self::bounds($hash);
+
+        return $latitude >= $minLat - $tolerance && $latitude <= $maxLat + $tolerance
+            && $longitude >= $minLng - $tolerance && $longitude <= $maxLng + $tolerance;
+    }
+
+    /**
      * @return array{0: float, 1: float} [height in degrees, width in degrees]
      */
     public static function cellSize(int $length): array

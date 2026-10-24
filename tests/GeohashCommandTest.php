@@ -79,4 +79,31 @@ final class GeohashCommandTest extends TestCase
         // The stores table only has the custom "hash" column, not "geohash".
         $this->artisan('laraversine:geohash', ['model' => Store::class])->assertExitCode(1);
     }
+
+    #[Test]
+    public function verify_accepts_a_hash_one_cell_over_because_of_database_rounding(): void
+    {
+        Destination::query()->delete();
+
+        [, $maxLat] = Geohash::bounds(Geohash::encode(7.123456, 125.654321));
+        $lat = floor($maxLat * 1e8) / 1e8; // inside the cell, within 1e-8 of its north edge
+        $lng = 125.654321;
+        $neighbour = Geohash::encode($lat + 2e-8, $lng);
+
+        $this->assertNotSame($neighbour, Geohash::encode($lat, $lng));
+
+        Destination::insert([['name' => 'edge', 'latitude' => $lat, 'longitude' => $lng, 'geohash' => $neighbour]]);
+
+        $this->artisan('laraversine:geohash', ['model' => Destination::class, '--verify' => true])->assertExitCode(0);
+    }
+
+    #[Test]
+    public function verify_rejects_a_truncated_hash(): void
+    {
+        Destination::query()->delete();
+
+        Destination::insert([['name' => 'short', 'latitude' => 7.1, 'longitude' => 125.6, 'geohash' => substr(Geohash::encode(7.1, 125.6), 0, 8)]]);
+
+        $this->artisan('laraversine:geohash', ['model' => Destination::class, '--verify' => true])->assertExitCode(1);
+    }
 }

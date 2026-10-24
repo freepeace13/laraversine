@@ -16,6 +16,13 @@ use Laraversine\GeohashColumn;
  */
 final class GeohashCommand extends Command
 {
+    /**
+     * Degrees. The database rounds coordinates to the column's precision, so a
+     * hash made from the value that was assigned can sit one cell over from a
+     * hash made from the stored value. That is not a stale hash.
+     */
+    private const ROUNDING_TOLERANCE = 1e-6;
+
     protected $signature = 'laraversine:geohash
         {model : The model class, for example App\\Models\\Store}
         {--verify : Report missing or stale geohashes without writing}
@@ -53,9 +60,10 @@ final class GeohashCommand extends Command
             ->chunkById(max(1, (int) $this->option('chunk')), function ($rows) use ($model, $key, $verify, &$mismatched, &$total, &$count) {
                 foreach ($rows as $row) {
                     $total++;
-                    $expected = $this->expectedHash($row, $model);
+                    $coordinates = $this->coordinates($row, $model);
+                    $expected = $coordinates === null ? null : Geohash::encode($coordinates->latitude, $coordinates->longitude);
 
-                    if ($row->getAttribute($model->getGeohashColumn()) === $expected) {
+                    if ($this->isCurrent($row->getAttribute($model->getGeohashColumn()), $expected, $coordinates)) {
                         continue;
                     }
 
@@ -91,17 +99,31 @@ final class GeohashCommand extends Command
         return self::SUCCESS;
     }
 
-    private function expectedHash(Model $row, Model $model): ?string
+    private function coordinates(Model $row, Model $model): ?Coordinates
     {
         try {
-            $coordinates = Coordinates::from([
+            return Coordinates::from([
                 $row->getAttribute($model->getLatitudeColumn()),
                 $row->getAttribute($model->getLongitudeColumn()),
             ]);
         } catch (InvalidArgumentException) {
             return null;
         }
+    }
 
-        return Geohash::encode($coordinates->latitude, $coordinates->longitude);
+    private function isCurrent(?string $stored, ?string $expected, ?Coordinates $coordinates): bool
+    {
+        if ($expected === null) {
+            return $stored === null;
+        }
+
+        if ($stored === $expected) {
+            return true;
+        }
+
+        // Only a full-length hash can match the index ranges, so a truncated one is stale.
+        return $stored !== null
+            && strlen($stored) === Geohash::LENGTH
+            && Geohash::contains($stored, $coordinates->latitude, $coordinates->longitude, self::ROUNDING_TOLERANCE);
     }
 }

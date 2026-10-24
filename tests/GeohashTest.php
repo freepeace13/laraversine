@@ -103,4 +103,17 @@ final class GeohashTest extends TestCase
         $this->assertEqualsWithDelta(90.0, Geohash::bounds($top)[1], self::EPSILON);
         $this->assertCount(5, Geohash::neighbours($top));
     }
+
+    #[Test]
+    public function contains_checks_a_point_against_a_cell_with_a_tolerance(): void
+    {
+        $hash = Geohash::encode(7.1, 125.6);
+        [$minLat, $maxLat, $minLng] = Geohash::bounds($hash);
+        $lng = $minLng + 1e-9;
+
+        $this->assertTrue(Geohash::contains($hash, 7.1, 125.6));
+        $this->assertFalse(Geohash::contains($hash, $maxLat + 1e-8, $lng));
+        $this->assertTrue(Geohash::contains($hash, $maxLat + 1e-8, $lng, 1e-7));
+        $this->assertFalse(Geohash::contains($hash, $minLat - 1e-3, $lng, 1e-7));
+    }
 }
