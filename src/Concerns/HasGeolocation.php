@@ -44,10 +44,16 @@ trait HasGeolocation
                 return;
             }
 
+            // A model loaded without one coordinate (select('id', 'lat')) takes
+            // the stored value, so changing the other one still gives a right hash.
+            $read = fn (string $name) => array_key_exists($name, $attributes)
+                ? $model->getAttribute($name)
+                : ($model->exists ? $model->newQueryWithoutScopes()->whereKey($model->getKey())->value($name) : null);
+
             try {
                 $coordinates = Coordinates::from([
-                    $model->getAttribute($model->getLatitudeColumn()),
-                    $model->getAttribute($model->getLongitudeColumn()),
+                    $read($model->getLatitudeColumn()),
+                    $read($model->getLongitudeColumn()),
                 ]);
 
                 $model->setAttribute($column, Geohash::encode($coordinates->latitude, $coordinates->longitude));

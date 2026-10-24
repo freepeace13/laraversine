@@ -70,6 +70,18 @@ final class GeohashHookTest extends TestCase
     }
 
     #[Test]
+    public function it_reads_the_stored_coordinate_when_only_one_was_loaded_and_changed(): void
+    {
+        $store = GeohashStore::create(['name' => 's', 'lat' => 7.1, 'lng' => 125.6]);
+
+        $partial = GeohashStore::select('id', 'lat')->find($store->id);
+        $partial->lat = 10.0;
+        $partial->save();
+
+        $this->assertSame(Geohash::encode(10.0, 125.6), $store->fresh()->hash);
+    }
+
+    #[Test]
     public function null_or_invalid_coordinates_set_a_null_hash(): void
     {
         $nowhere = GeohashStore::create(['name' => 'nowhere', 'lat' => null, 'lng' => null]);
