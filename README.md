@@ -150,6 +150,18 @@ enable it only after measuring a win on your own data.
    });
    ```
 
+   The search compares hashes with `BETWEEN`, so the column's collation has to
+   order digits and the letters `a` to `z` the usual way. The default collations
+   on MySQL 8, MariaDB 11, PostgreSQL 16 and SQLite do (the test suite runs on
+   them). A few locale collations do not; Estonian, for example, sorts `z`
+   between `s` and `t`. If yours is one of them, give the column a binary
+   collation:
+
+   ```php
+   $table->string('geohash', 12)->collation('utf8mb4_bin')->nullable()->index(); // MySQL, MariaDB
+   $table->string('geohash', 12)->collation('C')->nullable()->index();           // PostgreSQL
+   ```
+
 2. Fill it for existing rows, and run the same command whenever you want to check it:
 
    ```bash
