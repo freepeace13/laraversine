@@ -58,6 +58,25 @@ final class Haversine
     }
 
     /**
+     * Select the distance and keep only rows within $radius of the origin.
+     * This is the exact check every search driver finishes with.
+     */
+    public static function applyExact(Builder $query, Coordinates $origin, float $radius, string $unit): void
+    {
+        [$expression, $bindings] = self::forQuery($query, $origin, $unit);
+
+        if (empty($query->getQuery()->columns)) {
+            $query->select($query->getModel()->qualifyColumn('*'));
+        }
+
+        $query->selectRaw("{$expression} AS distance", $bindings);
+
+        // Inlined (it is a typed float): PDO would bind it as a string, which
+        // SQLite compares as greater than any number.
+        $query->whereRaw("{$expression} <= ".sprintf('%.8F', $radius), $bindings);
+    }
+
+    /**
      * The model's qualified latitude and longitude columns, quoted for the
      * query's grammar.
      *

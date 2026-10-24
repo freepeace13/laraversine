@@ -11,14 +11,6 @@ final class SqlDriver implements SearchDriver
 {
     public function applyRadius(Builder $query, Coordinates $origin, float $radius, string $unit): Builder
     {
-        [$expression, $bindings] = Haversine::forQuery($query, $origin, $unit);
-
-        if (empty($query->getQuery()->columns)) {
-            $query->select($query->getModel()->qualifyColumn('*'));
-        }
-
-        $query->selectRaw("{$expression} AS distance", $bindings);
-
         $box = BoundingBox::around($origin, $radius, $unit);
 
         if ($box !== null) {
@@ -34,9 +26,9 @@ final class SqlDriver implements SearchDriver
             $query->whereRaw("{$lat} IS NOT NULL AND {$lng} IS NOT NULL");
         }
 
-        // Inlined (it is a typed float): PDO would bind it as a string, which
-        // SQLite compares as greater than any number.
-        return $query->whereRaw("{$expression} <= ".$this->literal($radius), $bindings);
+        Haversine::applyExact($query, $origin, $radius, $unit);
+
+        return $query;
     }
 
     private function applyBox(Builder $query, BoundingBox $box): void
