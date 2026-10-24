@@ -158,6 +158,21 @@ final class GeohashDriverTest extends TestCase
     }
 
     #[Test]
+    public function the_null_probe_only_counts_rows_the_query_could_return(): void
+    {
+        $this->nullLimit(2);
+
+        // Another tenant's rows, none of them hashed.
+        DatasetFactory::seed(DatasetFactory::cluster(30, 6, 7.1, 125.6, 0.05));
+        Destination::query()->update(['name' => 'tenant-b']);
+        DatasetFactory::seed([['name' => 'tenant-a', 'latitude' => 7.1, 'longitude' => 125.6]], true);
+
+        $sql = Destination::where('name', 'tenant-a')->nearby([7.1, 125.6], 3.0)->toRawSql();
+
+        $this->assertStringContainsString('geohash', $sql);
+    }
+
+    #[Test]
     public function a_missing_geohash_column_throws(): void
     {
         $regions = new class extends Model

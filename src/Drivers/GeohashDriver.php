@@ -45,21 +45,24 @@ final class GeohashDriver implements SearchDriver
     }
 
     /**
-     * More than $nullLimit rows have coordinates but no hash. The probe stops
-     * counting one row past the limit, so it stays cheap on a large table.
+     * More than $nullLimit rows the query could return have coordinates but no
+     * hash. The probe starts from the query's own constraints and scopes, so
+     * other tenants' or deleted rows do not count, and it stops counting one
+     * row past the limit, so it stays cheap on a large table.
      */
     private function hasTooManyNullHashes(Builder $query): bool
     {
         $model = $query->getModel();
-        $connection = $query->getConnection();
 
-        $probe = $connection->table($model->getTable())
-            ->select($model->getKeyName())
-            ->whereNull($model->getGeohashColumn())
-            ->whereNotNull($model->getLatitudeColumn())
-            ->whereNotNull($model->getLongitudeColumn())
+        $probe = (clone $query)->applyScopes()->getQuery()
+            ->cloneWithout(['columns', 'orders', 'groups', 'havings', 'limit', 'offset', 'unions'])
+            ->cloneWithoutBindings(['select', 'order', 'groupBy', 'having', 'union'])
+            ->select($model->qualifyColumn($model->getKeyName()))
+            ->whereNull($model->getQualifiedGeohashColumn())
+            ->whereNotNull($model->getQualifiedLatitudeColumn())
+            ->whereNotNull($model->getQualifiedLongitudeColumn())
             ->limit($this->nullLimit + 1);
 
-        return $connection->query()->fromSub($probe, 'null_hashes')->count() > $this->nullLimit;
+        return $query->getConnection()->query()->fromSub($probe, 'null_hashes')->count() > $this->nullLimit;
     }
 }
