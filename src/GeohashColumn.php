@@ -7,28 +7,21 @@ use Illuminate\Support\Facades\Schema;
 use LogicException;
 
 /**
- * Checks that a model's table has its geohash column, once per process.
+ * Checks that a model's table has its geohash column, once per process for each table.
  *
  * @internal
  */
 final class GeohashColumn
 {
-    /** @var array<string, true> */
+    /** @var array<string, bool> */
     private static array $known = [];
 
     public static function exists(Model $model): bool
     {
         $key = $model->getConnectionName().'|'.$model->getTable().'|'.$model->getGeohashColumn();
 
-        if (isset(self::$known[$key])) {
-            return true;
-        }
-
-        if (! Schema::connection($model->getConnectionName())->hasColumn($model->getTable(), $model->getGeohashColumn())) {
-            return false;
-        }
-
-        return self::$known[$key] = true;
+        return self::$known[$key] ??= Schema::connection($model->getConnectionName())
+            ->hasColumn($model->getTable(), $model->getGeohashColumn());
     }
 
     public static function assertFor(Model $model): void

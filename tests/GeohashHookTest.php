@@ -139,7 +139,7 @@ final class GeohashHookTest extends TestCase
     }
 
     #[Test]
-    public function a_model_pinned_to_geohash_without_the_column_throws_on_save(): void
+    public function a_model_pinned_to_geohash_without_the_column_still_saves(): void
     {
         $region = new class extends Model
         {
@@ -154,8 +154,14 @@ final class GeohashHookTest extends TestCase
             protected $geolocationDriver = 'geohash';
         };
 
+        $created = $region->newQuery()->create(['latitude' => 7.1, 'longitude' => 125.6]);
+
+        $this->assertTrue($created->exists);
+        $this->assertArrayNotHasKey('geohash', $created->getAttributes());
+
+        // The misconfiguration surfaces when it is searched.
         $this->expectException(LogicException::class);
 
-        $region->newQuery()->create(['latitude' => 7.1, 'longitude' => 125.6]);
+        $region->newQuery()->nearby([7.1, 125.6], 1);
     }
 }

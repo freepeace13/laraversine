@@ -19,17 +19,16 @@ trait HasGeolocation
 {
     /**
      * Keep the geohash column in sync on save. It only acts when the model's
-     * searches use the geohash driver, so models on the default driver, and
-     * tables without the column, behave exactly as before.
+     * searches use the geohash driver and its table has the column, so models on
+     * the default driver, and tables without the column, save exactly as before.
+     * A model with the driver but no column fails when it is searched.
      */
     public static function bootHasGeolocation(): void
     {
         static::saving(function (Model $model) {
-            if (! $model->usesGeohash()) {
+            if (! $model->usesGeohash() || ! GeohashColumn::exists($model)) {
                 return;
             }
-
-            GeohashColumn::assertFor($model);
 
             $column = $model->getGeohashColumn();
             $coordinatesChanged = $model->isDirty([$model->getLatitudeColumn(), $model->getLongitudeColumn()]);

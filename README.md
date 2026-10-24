@@ -170,7 +170,8 @@ imports) keep their old hash and are not seen as moved, so run the command
 after bulk changes. Rows with coordinates but no hash are still found; when more
 than `geohash.null_limit` of them exist, the search uses the `sql` driver. The
 `sql` driver also runs for a very large radius, near a pole and across the
-antimeridian. A model with the driver but no column throws a `LogicException`.
+antimeridian. A model that uses the driver but has no column saves as before and throws a
+`LogicException` when it is searched.
 
 Rows without a hash cost something on every search: the query also has to read
 each row whose hash is `NULL`, including rows with no coordinates at all, so a
