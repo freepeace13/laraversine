@@ -2,6 +2,7 @@
 
 namespace Laraversine\Test;
 
+use Illuminate\Support\Facades\DB;
 use Laraversine\Coordinates;
 use Laraversine\Destination;
 use Laraversine\Geohash;
@@ -105,5 +106,19 @@ final class GeohashCommandTest extends TestCase
         Destination::insert([['name' => 'short', 'latitude' => 7.1, 'longitude' => 125.6, 'geohash' => substr(Geohash::encode(7.1, 125.6), 0, 8)]]);
 
         $this->artisan('laraversine:geohash', ['model' => Destination::class, '--verify' => true])->assertExitCode(1);
+    }
+
+    #[Test]
+    public function it_repairs_a_chunk_with_a_constant_number_of_updates(): void
+    {
+        $updates = 0;
+        DB::listen(function ($query) use (&$updates) {
+            $updates += str_starts_with(strtolower($query->sql), 'update') ? 1 : 0;
+        });
+
+        $this->artisan('laraversine:geohash', ['model' => Destination::class])->assertExitCode(0);
+
+        $this->assertLessThanOrEqual(2, $updates);
+        $this->assertSame(0, Destination::whereNull('geohash')->count());
     }
 }

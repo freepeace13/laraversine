@@ -57,7 +57,9 @@ final class GeohashCommand extends Command
 
         $model->newQueryWithoutScopes()
             ->select([$key, $model->getLatitudeColumn(), $model->getLongitudeColumn(), $model->getGeohashColumn()])
-            ->chunkById(max(1, (int) $this->option('chunk')), function ($rows) use ($model, $key, $verify, &$mismatched, &$total, &$count) {
+            ->chunkById(max(1, (int) $this->option('chunk')), function ($rows) use ($model, $verify, &$mismatched, &$total, &$count) {
+                $pending = [];
+
                 foreach ($rows as $row) {
                     $total++;
                     $coordinates = $this->coordinates($row, $model);
@@ -73,12 +75,11 @@ final class GeohashCommand extends Command
                         $mismatched[] = $row->getKey();
                     }
 
-                    if (! $verify) {
-                        // Through the query builder: no model events, no updated_at change.
-                        $model->newQueryWithoutScopes()->toBase()
-                            ->where($key, $row->getKey())
-                            ->update([$model->getGeohashColumn() => $expected]);
-                    }
+                    $pending[$row->getKey()] = $expected;
+                }
+
+                if (! $verify) {
+                    $this->write($model, $pending);
                 }
             }, $key);
 
@@ -97,6 +98,46 @@ final class GeohashCommand extends Command
         $this->info("Repaired {$count} of {$total} rows.");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * One UPDATE for the rows getting a hash and one for the rows losing it,
+     * through the connection and not the model: no model events, no
+     * updated_at change.
+     *
+     * @param  array<array-key, string|null>  $hashes  primary key => expected hash
+     */
+    private function write(Model $model, array $hashes): void
+    {
+        $connection = $model->getConnection();
+        $grammar = $connection->getQueryGrammar();
+        $table = $grammar->wrapTable($model->getTable());
+        $column = $grammar->wrap($model->getGeohashColumn());
+        $key = $grammar->wrap($model->getKeyName());
+
+        $set = array_filter($hashes, fn (?string $hash) => $hash !== null);
+        $clear = array_keys(array_diff_key($hashes, $set));
+
+        if ($set !== []) {
+            $bindings = [];
+
+            foreach ($set as $id => $hash) {
+                array_push($bindings, $id, $hash);
+            }
+
+            $connection->update(
+                "update {$table} set {$column} = case {$key} ".implode(' ', array_fill(0, count($set), 'when ? then ?'))
+                ." end where {$key} in (".implode(', ', array_fill(0, count($set), '?')).')',
+                [...$bindings, ...array_keys($set)],
+            );
+        }
+
+        if ($clear !== []) {
+            $connection->update(
+                "update {$table} set {$column} = null where {$key} in (".implode(', ', array_fill(0, count($clear), '?')).')',
+                $clear,
+            );
+        }
     }
 
     private function coordinates(Model $row, Model $model): ?Coordinates
