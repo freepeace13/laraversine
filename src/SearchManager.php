@@ -24,6 +24,6 @@ class SearchManager extends Manager
 
     protected function createGeohashDriver(): SearchDriver
     {
-        return new GeohashDriver(new SqlDriver);
+        return new GeohashDriver(new SqlDriver, (int) $this->config->get('laraversine.geohash.null_limit', 1000));
     }
 }

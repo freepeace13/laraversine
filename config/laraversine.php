@@ -29,6 +29,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | geohash driver
+    |--------------------------------------------------------------------------
+    |
+    | null_limit: rows with coordinates but no geohash are still searched. When
+    |             more than this many exist, the whole search falls back to the
+    |             sql driver.
+    |
+    */
+    'geohash' => [
+        'null_limit' => 1000,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | nearest()
     |--------------------------------------------------------------------------
     |

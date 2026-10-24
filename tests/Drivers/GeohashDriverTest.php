@@ -5,9 +5,13 @@ namespace Laraversine\Test\Drivers;
 use Illuminate\Database\Eloquent\Model;
 use Laraversine\Concerns\HasGeolocation;
 use Laraversine\Destination;
+use Laraversine\Geohash;
+use Laraversine\SearchManager;
 use Laraversine\Test\Support\BruteForce;
 use Laraversine\Test\Support\DatasetFactory;
+use Laraversine\Test\Support\GeohashStore;
 use Laraversine\Test\TestCase;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 
 final class GeohashDriverTest extends TestCase
@@ -106,5 +110,74 @@ final class GeohashDriverTest extends TestCase
         config(['laraversine.driver' => 'sql']);
 
         $this->assertFalse($inherits->usesGeohash());
+    }
+
+    #[Test]
+    public function rows_with_null_coordinates_are_never_returned(): void
+    {
+        GeohashStore::insert([
+            ['name' => 'hashed', 'lat' => 7.1, 'lng' => 125.6, 'hash' => Geohash::encode(7.1, 125.6)],
+            ['name' => 'nowhere', 'lat' => null, 'lng' => null, 'hash' => null],
+        ]);
+
+        foreach ([1.0, 5000.0] as $radius) {
+            $names = GeohashStore::nearby([7.1, 125.6], $radius)->pluck('name')->all();
+
+            $this->assertContains('hashed', $names, "radius {$radius}");
+            $this->assertNotContains('nowhere', $names, "radius {$radius}");
+        }
+    }
+
+    #[Test]
+    public function null_coordinates_do_not_count_toward_the_null_limit(): void
+    {
+        $this->nullLimit(2);
+
+        GeohashStore::insert(array_merge(
+            [['name' => 'hashed', 'lat' => 7.1, 'lng' => 125.6, 'hash' => Geohash::encode(7.1, 125.6)]],
+            array_fill(0, 5, ['name' => 'nowhere', 'lat' => null, 'lng' => null, 'hash' => null]),
+        ));
+
+        $this->assertStringContainsString('hash', GeohashStore::nearby([7.1, 125.6], 1)->toRawSql());
+    }
+
+    #[Test]
+    public function too_many_null_hashes_fall_back(): void
+    {
+        $this->nullLimit(2);
+
+        DatasetFactory::seed(DatasetFactory::cluster(30, 6, 7.1, 125.6, 0.05));
+        $stored = DatasetFactory::stored();
+        $origin = [7.1, 125.6];
+
+        $expected = BruteForce::within($stored, $origin, 3.0);
+        $query = Destination::nearby($origin, 3.0);
+
+        $this->assertStringNotContainsString('geohash', $query->toRawSql());
+        $this->assertEqualsCanonicalizing(array_keys($expected), $query->pluck('id')->all());
+    }
+
+    #[Test]
+    public function a_missing_geohash_column_throws(): void
+    {
+        $regions = new class extends Model
+        {
+            use HasGeolocation;
+
+            protected $table = 'regions';
+
+            protected $geolocationDriver = 'geohash';
+        };
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('geohash');
+
+        $regions->newQuery()->nearby([7.1, 125.6], 1);
+    }
+
+    private function nullLimit(int $limit): void
+    {
+        config(['laraversine.geohash.null_limit' => $limit]);
+        app(SearchManager::class)->forgetDrivers();
     }
 }
