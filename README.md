@@ -172,6 +172,11 @@ than `geohash.null_limit` of them exist, the search uses the `sql` driver. The
 `sql` driver also runs for a very large radius, near a pole and across the
 antimeridian. A model with the driver but no column throws a `LogicException`.
 
+Rows without a hash cost something on every search: the query also has to read
+each row whose hash is `NULL`, including rows with no coordinates at all, so a
+table where most rows have no location pays a cost that grows with that count.
+`nearest()` pays it once per round.
+
 ### Laravel Boost
 
 The package ships [Laravel Boost](https://laravel.com/docs/boost) guidelines and a
