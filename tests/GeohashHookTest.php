@@ -58,6 +58,18 @@ final class GeohashHookTest extends TestCase
     }
 
     #[Test]
+    public function it_keeps_the_hash_when_the_model_was_loaded_without_its_coordinates(): void
+    {
+        config(['laraversine.driver' => 'geohash']);
+
+        $destination = Destination::create(['name' => 'a', 'latitude' => 7.1, 'longitude' => 125.6]);
+
+        Destination::select('id', 'name')->find($destination->id)->update(['name' => 'renamed']);
+
+        $this->assertSame(Geohash::encode(7.1, 125.6), $destination->fresh()->geohash);
+    }
+
+    #[Test]
     public function null_or_invalid_coordinates_set_a_null_hash(): void
     {
         $nowhere = GeohashStore::create(['name' => 'nowhere', 'lat' => null, 'lng' => null]);

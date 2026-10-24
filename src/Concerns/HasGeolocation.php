@@ -34,7 +34,13 @@ trait HasGeolocation
             $column = $model->getGeohashColumn();
             $coordinatesChanged = $model->isDirty([$model->getLatitudeColumn(), $model->getLongitudeColumn()]);
 
-            if (! $coordinatesChanged && ! empty($model->getAttribute($column))) {
+            $attributes = $model->getAttributes();
+            $coordinatesLoaded = array_key_exists($model->getLatitudeColumn(), $attributes)
+                && array_key_exists($model->getLongitudeColumn(), $attributes);
+
+            // A model loaded without its coordinates (select('id', 'name')) must not
+            // have its hash recomputed from nothing and overwritten with NULL.
+            if (! $coordinatesChanged && (! $coordinatesLoaded || ! empty($model->getAttribute($column)))) {
                 return;
             }
 
