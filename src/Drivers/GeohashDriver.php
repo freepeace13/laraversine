@@ -7,6 +7,7 @@ use Laraversine\Contracts\SearchDriver;
 use Laraversine\Coordinates;
 use Laraversine\GeohashColumn;
 use Laraversine\Haversine;
+use Laraversine\SearchMemo;
 
 /**
  * Narrows candidates with prefix ranges on a stored geohash column, then
@@ -63,6 +64,12 @@ final class GeohashDriver implements SearchDriver
             ->whereNotNull($model->getQualifiedLongitudeColumn())
             ->limit($this->nullLimit + 1);
 
-        return $query->getConnection()->query()->fromSub($probe, 'null_hashes')->count() > $this->nullLimit;
+        $connection = $query->getConnection();
+        $key = implode('|', [$connection->getName(), $probe->toSql(), json_encode($probe->getBindings())]);
+
+        return SearchMemo::remember(
+            $key,
+            fn () => $connection->query()->fromSub($probe, 'null_hashes')->count() > $this->nullLimit,
+        );
     }
 }

@@ -3,6 +3,7 @@
 namespace Laraversine\Test\Drivers;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Laraversine\Concerns\HasGeolocation;
 use Laraversine\Destination;
 use Laraversine\Geohash;
@@ -170,6 +171,20 @@ final class GeohashDriverTest extends TestCase
         $sql = Destination::where('name', 'tenant-a')->nearby([7.1, 125.6], 3.0)->toRawSql();
 
         $this->assertStringContainsString('geohash', $sql);
+    }
+
+    #[Test]
+    public function nearest_runs_the_null_probe_once_for_all_its_rounds(): void
+    {
+        DatasetFactory::seed([['name' => 'lonely', 'latitude' => -45.0, 'longitude' => 170.0]], true);
+
+        $probes = 0;
+        DB::listen(function ($query) use (&$probes) {
+            $probes += str_contains($query->sql, 'null_hashes') ? 1 : 0;
+        });
+
+        $this->assertSame('lonely', Destination::nearest([60.0, -20.0])->name);
+        $this->assertSame(1, $probes);
     }
 
     #[Test]
