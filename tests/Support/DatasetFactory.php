@@ -3,6 +3,7 @@
 namespace Laraversine\Test\Support;
 
 use Laraversine\Destination;
+use Laraversine\Geohash;
 
 final class DatasetFactory
 {
@@ -64,8 +65,12 @@ final class DatasetFactory
         return $rows;
     }
 
-    public static function seed(array $rows): void
+    public static function seed(array $rows, bool $geohash = false): void
     {
+        if ($geohash) {
+            $rows = array_map(fn (array $row) => $row + ['geohash' => Geohash::encode($row['latitude'], $row['longitude'])], $rows);
+        }
+
         foreach (array_chunk($rows, 500) as $chunk) {
             Destination::insert($chunk);
         }

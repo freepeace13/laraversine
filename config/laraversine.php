@@ -22,7 +22,7 @@ return [
     | protected string $geolocationDriver property. Add your own with
     | Laraversine::extend('name', fn () => new YourDriver).
     |
-    | Supported: "sql"
+    | Supported: "sql", "geohash"
     |
     */
     'driver' => 'sql',

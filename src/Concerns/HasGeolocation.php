@@ -34,9 +34,28 @@ trait HasGeolocation
         return $this->qualifyColumn($this->getLongitudeColumn());
     }
 
+    public function getGeohashColumn(): string
+    {
+        return property_exists($this, 'geohashColumn') ? $this->geohashColumn : 'geohash';
+    }
+
+    public function getQualifiedGeohashColumn(): string
+    {
+        return $this->qualifyColumn($this->getGeohashColumn());
+    }
+
     public function getGeolocationDriverName(): ?string
     {
         return property_exists($this, 'geolocationDriver') ? $this->geolocationDriver : null;
+    }
+
+    /**
+     * Whether this model's searches run on the geohash driver, whether it is
+     * named on the model or inherited from the config.
+     */
+    public function usesGeohash(): bool
+    {
+        return ($this->getGeolocationDriverName() ?? config('laraversine.driver', 'sql')) === 'geohash';
     }
 
     /**
