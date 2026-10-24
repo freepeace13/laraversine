@@ -112,4 +112,12 @@ class HaversineTest extends TestCase
         $this->assertSame(3958.8, Haversine::earthRadius('mile'));
         $this->assertEqualsWithDelta(M_PI * 6371.0, Haversine::halfCircumference('km'), 0.0001);
     }
+
+    #[Test]
+    public function literal_inlines_a_float_with_eight_decimals(): void
+    {
+        $this->assertSame('1.50000000', Haversine::literal(1.5));
+        $this->assertSame('0.30000000', Haversine::literal(0.1 + 0.2));
+        $this->assertSame('-180.00000000', Haversine::literal(-180));
+    }
 }

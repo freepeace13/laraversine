@@ -35,22 +35,17 @@ final class SqlDriver implements SearchDriver
     {
         [$lat, $lng] = Haversine::columns($query);
 
-        $query->whereRaw("{$lat} BETWEEN {$this->literal($box->minLatitude)} AND {$this->literal($box->maxLatitude)}");
+        $query->whereRaw("{$lat} BETWEEN ".Haversine::literal($box->minLatitude).' AND '.Haversine::literal($box->maxLatitude));
 
         if ($box->longitudeRanges === null) {
             return;
         }
 
         $clauses = array_map(
-            fn (array $range) => "{$lng} BETWEEN {$this->literal($range[0])} AND {$this->literal($range[1])}",
+            fn (array $range) => "{$lng} BETWEEN ".Haversine::literal($range[0]).' AND '.Haversine::literal($range[1]),
             $box->longitudeRanges,
         );
 
         $query->whereRaw(count($clauses) === 1 ? $clauses[0] : '('.implode(' OR ', $clauses).')');
-    }
-
-    private function literal(float $value): string
-    {
-        return sprintf('%.8F', $value);
     }
 }

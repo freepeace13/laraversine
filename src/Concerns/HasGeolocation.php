@@ -154,9 +154,7 @@ trait HasGeolocation
         [$origin, $unit] = $remembered;
         [$expression, $bindings] = Haversine::forQuery($query, $origin, $unit);
 
-        // Inlined (it is a typed float): PDO would bind it as a string, which
-        // SQLite compares as greater than any number.
-        return $query->whereRaw("{$expression} <= ".sprintf('%.8F', $radius), $bindings);
+        return $query->whereRaw("{$expression} <= ".Haversine::literal($radius), $bindings);
     }
 
     /**

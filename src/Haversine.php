@@ -71,9 +71,17 @@ final class Haversine
 
         $query->selectRaw("{$expression} AS distance", $bindings);
 
-        // Inlined (it is a typed float): PDO would bind it as a string, which
-        // SQLite compares as greater than any number.
-        $query->whereRaw("{$expression} <= ".sprintf('%.8F', $radius), $bindings);
+        $query->whereRaw("{$expression} <= ".self::literal($radius), $bindings);
+    }
+
+    /**
+     * A float as an inlined SQL literal. Radius and bounding-box bounds are
+     * inlined (they are typed floats) because PDO would bind them as strings,
+     * which SQLite compares as greater than any number.
+     */
+    public static function literal(float $value): string
+    {
+        return sprintf('%.8F', $value);
     }
 
     /**
