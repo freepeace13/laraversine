@@ -116,4 +116,28 @@ final class GeohashTest extends TestCase
         $this->assertTrue(Geohash::contains($hash, $maxLat + 1e-8, $lng, 1e-7));
         $this->assertFalse(Geohash::contains($hash, $minLat - 1e-3, $lng, 1e-7));
     }
+
+    #[Test]
+    public function bounds_rejects_characters_outside_the_alphabet(): void
+    {
+        foreach (['ezs4a', 'EZS42', 'ezs4i', 'ezs4 '] as $hash) {
+            try {
+                Geohash::bounds($hash);
+                $this->fail("{$hash} should be rejected");
+            } catch (\InvalidArgumentException $e) {
+                $this->assertStringContainsString('geohash', strtolower($e->getMessage()));
+            }
+        }
+    }
+
+    #[Test]
+    public function is_valid_requires_the_alphabet_and_the_length(): void
+    {
+        $this->assertTrue(Geohash::isValid('ezs42'));
+        $this->assertTrue(Geohash::isValid(Geohash::encode(7.1, 125.6), Geohash::LENGTH));
+        $this->assertFalse(Geohash::isValid('ezs42', Geohash::LENGTH));
+        $this->assertFalse(Geohash::isValid('ezs4a'));
+        $this->assertFalse(Geohash::isValid('EZS42'));
+        $this->assertFalse(Geohash::isValid(''));
+    }
 }

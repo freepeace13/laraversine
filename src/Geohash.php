@@ -2,6 +2,8 @@
 
 namespace Laraversine;
 
+use InvalidArgumentException;
+
 /**
  * Geohash encoding: a string where a shared prefix means the same grid cell.
  * Bits alternate longitude first, five bits per base32 character.
@@ -56,6 +58,10 @@ final class Geohash
         foreach (str_split($hash) as $character) {
             $index = strpos(self::ALPHABET, $character);
 
+            if ($index === false) {
+                throw new InvalidArgumentException("\"{$character}\" is not a geohash character.");
+            }
+
             for ($mask = 16; $mask > 0; $mask >>= 1) {
                 $middle = ($ranges[$axis][0] + $ranges[$axis][1]) / 2;
                 $ranges[$axis][$index & $mask ? 0 : 1] = $middle;
@@ -64,6 +70,15 @@ final class Geohash
         }
 
         return [$ranges['lat'][0], $ranges['lat'][1], $ranges['lng'][0], $ranges['lng'][1]];
+    }
+
+    /**
+     * Whether $hash only uses geohash characters (lowercase, without a, i, l
+     * and o), and has $length of them when a length is given.
+     */
+    public static function isValid(string $hash, ?int $length = null): bool
+    {
+        return preg_match('/^[0-9b-hjkmnp-z]+$/', $hash) === 1 && ($length === null || strlen($hash) === $length);
     }
 
     /**

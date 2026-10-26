@@ -162,9 +162,9 @@ final class GeohashCommand extends Command
             return true;
         }
 
-        // Only a full-length hash can match the index ranges, so a truncated one is stale.
+        // Only a full-length hash of geohash characters can match the index ranges, so any other is stale.
         return $stored !== null
-            && strlen($stored) === Geohash::LENGTH
+            && Geohash::isValid($stored, Geohash::LENGTH)
             && Geohash::contains($stored, $coordinates->latitude, $coordinates->longitude, self::ROUNDING_TOLERANCE);
     }
 }

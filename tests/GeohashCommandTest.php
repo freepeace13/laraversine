@@ -121,4 +121,20 @@ final class GeohashCommandTest extends TestCase
         $this->assertLessThanOrEqual(2, $updates);
         $this->assertSame(0, Destination::whereNull('geohash')->count());
     }
+
+    #[Test]
+    public function verify_rejects_a_hash_with_a_character_outside_the_alphabet(): void
+    {
+        Destination::query()->delete();
+
+        // Right length and next to the right cell, but "a" is not a geohash character.
+        $broken = substr(Geohash::encode(7.1, 125.6), 0, 11).'a';
+
+        Destination::insert([['name' => 'broken', 'latitude' => 7.1, 'longitude' => 125.6, 'geohash' => $broken]]);
+
+        $this->artisan('laraversine:geohash', ['model' => Destination::class, '--verify' => true])->assertExitCode(1);
+
+        $this->artisan('laraversine:geohash', ['model' => Destination::class])->assertExitCode(0);
+        $this->assertSame(Geohash::encode(7.1, 125.6), Destination::first()->geohash);
+    }
 }
