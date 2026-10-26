@@ -2,6 +2,16 @@
 
 All notable changes to `freepeace13/laraversine` are documented here.
 
+## [2.1.1](https://github.com/freepeace13/laraversine/compare/v2.1.0...v2.1.1) (2026-10-26)
+
+
+### Miscellaneous Chores
+
+* merge 2.x into main ([bfdbaf2](https://github.com/freepeace13/laraversine/commit/bfdbaf252942e94a48b93a6c40bc0588c696f139))
+* merge 2.x into main ([08cfcb7](https://github.com/freepeace13/laraversine/commit/08cfcb72fcd9a1ef76bd5b98959599119299e950))
+* merge 2.x into main ([af14c33](https://github.com/freepeace13/laraversine/commit/af14c33438a0847109407ae8687479669a3de5d6))
+* merge 2.x into main ([72a27df](https://github.com/freepeace13/laraversine/commit/72a27dfb0c74868704bc613b705713e6e464d984))
+
 ## [2.1.0](https://github.com/freepeace13/laraversine/compare/v2.0.0...v2.1.0) (2026-10-26)
 
 
