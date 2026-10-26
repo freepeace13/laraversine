@@ -58,6 +58,37 @@ final class Haversine
     }
 
     /**
+     * Select the distance and keep only rows within $radius of the origin.
+     * This is the exact check every search driver finishes with.
+     *
+     * @internal Not covered by semver; custom drivers should not depend on it.
+     */
+    public static function applyExact(Builder $query, Coordinates $origin, float $radius, string $unit): void
+    {
+        [$expression, $bindings] = self::forQuery($query, $origin, $unit);
+
+        if (empty($query->getQuery()->columns)) {
+            $query->select($query->getModel()->qualifyColumn('*'));
+        }
+
+        $query->selectRaw("{$expression} AS distance", $bindings);
+
+        $query->whereRaw("{$expression} <= ".self::literal($radius), $bindings);
+    }
+
+    /**
+     * A float as an inlined SQL literal. Radius and bounding-box bounds are
+     * inlined (they are typed floats) because PDO would bind them as strings,
+     * which SQLite compares as greater than any number.
+     *
+     * @internal Not covered by semver; custom drivers should not depend on it.
+     */
+    public static function literal(float $value): string
+    {
+        return sprintf('%.8F', $value);
+    }
+
+    /**
      * The model's qualified latitude and longitude columns, quoted for the
      * query's grammar.
      *

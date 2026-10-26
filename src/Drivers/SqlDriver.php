@@ -11,14 +11,6 @@ final class SqlDriver implements SearchDriver
 {
     public function applyRadius(Builder $query, Coordinates $origin, float $radius, string $unit): Builder
     {
-        [$expression, $bindings] = Haversine::forQuery($query, $origin, $unit);
-
-        if (empty($query->getQuery()->columns)) {
-            $query->select($query->getModel()->qualifyColumn('*'));
-        }
-
-        $query->selectRaw("{$expression} AS distance", $bindings);
-
         $box = BoundingBox::around($origin, $radius, $unit);
 
         if ($box !== null) {
@@ -34,31 +26,26 @@ final class SqlDriver implements SearchDriver
             $query->whereRaw("{$lat} IS NOT NULL AND {$lng} IS NOT NULL");
         }
 
-        // Inlined (it is a typed float): PDO would bind it as a string, which
-        // SQLite compares as greater than any number.
-        return $query->whereRaw("{$expression} <= ".$this->literal($radius), $bindings);
+        Haversine::applyExact($query, $origin, $radius, $unit);
+
+        return $query;
     }
 
     private function applyBox(Builder $query, BoundingBox $box): void
     {
         [$lat, $lng] = Haversine::columns($query);
 
-        $query->whereRaw("{$lat} BETWEEN {$this->literal($box->minLatitude)} AND {$this->literal($box->maxLatitude)}");
+        $query->whereRaw("{$lat} BETWEEN ".Haversine::literal($box->minLatitude).' AND '.Haversine::literal($box->maxLatitude));
 
         if ($box->longitudeRanges === null) {
             return;
         }
 
         $clauses = array_map(
-            fn (array $range) => "{$lng} BETWEEN {$this->literal($range[0])} AND {$this->literal($range[1])}",
+            fn (array $range) => "{$lng} BETWEEN ".Haversine::literal($range[0]).' AND '.Haversine::literal($range[1]),
             $box->longitudeRanges,
         );
 
         $query->whereRaw(count($clauses) === 1 ? $clauses[0] : '('.implode(' OR ', $clauses).')');
-    }
-
-    private function literal(float $value): string
-    {
-        return sprintf('%.8F', $value);
     }
 }

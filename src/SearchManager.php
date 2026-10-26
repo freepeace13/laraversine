@@ -4,6 +4,7 @@ namespace Laraversine;
 
 use Illuminate\Support\Manager;
 use Laraversine\Contracts\SearchDriver;
+use Laraversine\Drivers\GeohashDriver;
 use Laraversine\Drivers\SqlDriver;
 
 /**
@@ -19,5 +20,10 @@ class SearchManager extends Manager
     protected function createSqlDriver(): SearchDriver
     {
         return new SqlDriver;
+    }
+
+    protected function createGeohashDriver(): SearchDriver
+    {
+        return new GeohashDriver(new SqlDriver, (int) $this->config->get('laraversine.geohash.null_limit', 1000));
     }
 }

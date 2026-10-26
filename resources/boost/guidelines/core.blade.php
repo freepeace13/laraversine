@@ -11,4 +11,5 @@ Haversine nearest/radius search for Eloquent, computed in SQL (MySQL, MariaDB, P
 - The unit is `config('laraversine.search_by')` (`km` or `mile`) and applies to every radius and distance.
 - Add a composite index on the coordinate columns: `$table->index(['latitude', 'longitude']);`.
 - Custom search drivers implement `Laraversine\Contracts\SearchDriver`, are registered with `Laraversine::extend('name', fn () => new MyDriver)` and selected with `config('laraversine.driver')` or `protected string $geolocationDriver`. A driver must finish with the exact haversine check and never return a row on a bounding box alone.
+- An opt-in `geohash` driver (`'driver' => 'geohash'` or `protected string $geolocationDriver = 'geohash'`) searches a stored geohash column. It needs a nullable indexed `geohash` column, filled by `php artisan laraversine:geohash "App\Models\Model"`. It was not faster than the default `sql` driver in the benchmarks, so do not suggest it as a speed-up without measuring.
 - The package ships a `destinations` migration (`php artisan vendor:publish --tag=laraversine-migrations`) for `Laraversine\Destination`; it is not loaded automatically.
