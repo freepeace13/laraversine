@@ -3,10 +3,13 @@
 namespace Laraversine\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use Laraversine\Contracts\SearchDriver;
 use Laraversine\Coordinates;
 use Laraversine\Distance;
+use Laraversine\Geohash;
+use Laraversine\GeohashColumn;
 use Laraversine\Haversine;
 use Laraversine\Origins;
 use Laraversine\SearchManager;
@@ -14,6 +17,51 @@ use LogicException;
 
 trait HasGeolocation
 {
+    /**
+     * Keep the geohash column in sync on save. It only acts when the model's
+     * searches use the geohash driver and its table has the column, so models on
+     * the default driver, and tables without the column, save exactly as before.
+     * A model with the driver but no column fails when it is searched.
+     */
+    public static function bootHasGeolocation(): void
+    {
+        static::saving(function (Model $model) {
+            if (! $model->usesGeohash() || ! GeohashColumn::exists($model)) {
+                return;
+            }
+
+            $column = $model->getGeohashColumn();
+            $coordinatesChanged = $model->isDirty([$model->getLatitudeColumn(), $model->getLongitudeColumn()]);
+
+            $attributes = $model->getAttributes();
+            $coordinatesLoaded = array_key_exists($model->getLatitudeColumn(), $attributes)
+                && array_key_exists($model->getLongitudeColumn(), $attributes);
+
+            // A model loaded without its coordinates (select('id', 'name')) must not
+            // have its hash recomputed from nothing and overwritten with NULL.
+            if (! $coordinatesChanged && (! $coordinatesLoaded || ! empty($model->getAttribute($column)))) {
+                return;
+            }
+
+            // A model loaded without one coordinate (select('id', 'lat')) takes
+            // the stored value, so changing the other one still gives a right hash.
+            $read = fn (string $name) => array_key_exists($name, $attributes)
+                ? $model->getAttribute($name)
+                : ($model->exists ? $model->newQueryWithoutScopes()->whereKey($model->getKey())->value($name) : null);
+
+            try {
+                $coordinates = Coordinates::from([
+                    $read($model->getLatitudeColumn()),
+                    $read($model->getLongitudeColumn()),
+                ]);
+
+                $model->setAttribute($column, Geohash::encode($coordinates->latitude, $coordinates->longitude));
+            } catch (InvalidArgumentException) {
+                $model->setAttribute($column, null);
+            }
+        });
+    }
+
     public function getLatitudeColumn(): string
     {
         return property_exists($this, 'latitudeColumn') ? $this->latitudeColumn : 'latitude';
@@ -34,9 +82,28 @@ trait HasGeolocation
         return $this->qualifyColumn($this->getLongitudeColumn());
     }
 
+    public function getGeohashColumn(): string
+    {
+        return property_exists($this, 'geohashColumn') ? $this->geohashColumn : 'geohash';
+    }
+
+    public function getQualifiedGeohashColumn(): string
+    {
+        return $this->qualifyColumn($this->getGeohashColumn());
+    }
+
     public function getGeolocationDriverName(): ?string
     {
         return property_exists($this, 'geolocationDriver') ? $this->geolocationDriver : null;
+    }
+
+    /**
+     * Whether this model's searches run on the geohash driver, whether it is
+     * named on the model or inherited from the config.
+     */
+    public function usesGeohash(): bool
+    {
+        return ($this->getGeolocationDriverName() ?? config('laraversine.driver', 'sql')) === 'geohash';
     }
 
     /**
@@ -87,9 +154,7 @@ trait HasGeolocation
         [$origin, $unit] = $remembered;
         [$expression, $bindings] = Haversine::forQuery($query, $origin, $unit);
 
-        // Inlined (it is a typed float): PDO would bind it as a string, which
-        // SQLite compares as greater than any number.
-        return $query->whereRaw("{$expression} <= ".sprintf('%.8F', $radius), $bindings);
+        return $query->whereRaw("{$expression} <= ".Haversine::literal($radius), $bindings);
     }
 
     /**

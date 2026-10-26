@@ -17,6 +17,12 @@ abstract class SearchDriverContract extends TestCase
 {
     abstract protected function driverName(): string;
 
+    /** Insert the dataset. A driver that reads a stored column fills it here. */
+    protected function seedDataset(array $rows): void
+    {
+        DatasetFactory::seed($rows);
+    }
+
     /** Register the driver under test with the manager, if it is not built in. */
     protected function registerDrivers(): void {}
 
@@ -63,7 +69,7 @@ abstract class SearchDriverContract extends TestCase
     #[DataProvider('scenarios')]
     public function nearby_matches_brute_force(array $rows, array $origins): void
     {
-        DatasetFactory::seed($rows);
+        $this->seedDataset($rows);
         $stored = DatasetFactory::stored();
 
         foreach ($origins as $origin) {
@@ -85,7 +91,7 @@ abstract class SearchDriverContract extends TestCase
     #[DataProvider('scenarios')]
     public function nearest_matches_brute_force(array $rows, array $origins): void
     {
-        DatasetFactory::seed($rows);
+        $this->seedDataset($rows);
         $stored = DatasetFactory::stored();
 
         foreach ($origins as $origin) {
@@ -102,7 +108,7 @@ abstract class SearchDriverContract extends TestCase
     #[Test]
     public function nearest_finds_a_single_far_away_row(): void
     {
-        DatasetFactory::seed([['name' => 'lonely', 'latitude' => -45.0, 'longitude' => 170.0]]);
+        $this->seedDataset([['name' => 'lonely', 'latitude' => -45.0, 'longitude' => 170.0]]);
 
         $this->assertSame('lonely', Destination::nearest([60.0, -20.0])->name);
     }
