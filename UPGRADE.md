@@ -1,5 +1,15 @@
 # Upgrading
 
+## Adopting the geohash driver (2.1, optional)
+
+Nothing changes when you update to 2.1: the default driver, config and queries are the same. The `geohash` driver is opt-in and was not faster than the `sql` driver in our benchmarks, so measure before you switch. To try it:
+
+1. Add a nullable, indexed `geohash` string column (see the README).
+2. Run `php artisan laraversine:geohash "App\Models\YourModel"` to fill it.
+3. Set `'driver' => 'geohash'`, or `protected string $geolocationDriver = 'geohash';` on one model.
+
+Publish the config again to see the new `geohash.null_limit` key; the default works without publishing.
+
 ## From 1.x to 2.0
 
 ### Requirements

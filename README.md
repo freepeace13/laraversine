@@ -135,6 +135,71 @@ Laraversine::extend('my-driver', fn () => new MyDriver);
 A driver must finish with an exact distance check and never return a row only
 because it fell inside a bounding box.
 
+#### The `geohash` driver (opt-in)
+
+The `geohash` driver narrows a search with prefix ranges on a stored geohash
+column instead of a latitude/longitude box. **In our benchmarks it was not
+faster than the default `sql` driver** (see [BENCHMARKS.md](BENCHMARKS.md)), so
+enable it only after measuring a win on your own data.
+
+1. Add a nullable, indexed column to the table (any name; `geohash` is the default):
+
+   ```php
+   Schema::table('destinations', function (Blueprint $table) {
+       $table->string('geohash', 12)->nullable()->index();
+   });
+   ```
+
+   The search compares hashes with `BETWEEN`, so the column's collation has to
+   order digits and the letters `a` to `z` the usual way. The default collations
+   on MySQL 8, MariaDB 11, PostgreSQL 16 and SQLite do (the test suite runs on
+   them). A few locale collations do not; Estonian, for example, sorts `z`
+   between `s` and `t`. If yours is one of them, give the column a binary
+   collation:
+
+   ```php
+   $table->string('geohash', 12)->collation('utf8mb4_bin')->nullable()->index(); // MySQL, MariaDB
+   $table->string('geohash', 12)->collation('C')->nullable()->index();           // PostgreSQL
+   ```
+
+2. Fill it for existing rows, and run the same command whenever you want to check it:
+
+   ```bash
+   php artisan laraversine:geohash "App\Models\Destination"           # backfill and repair
+   php artisan laraversine:geohash "App\Models\Destination" --verify  # report only; exits 1 on a mismatch
+   ```
+
+3. Switch the driver, globally with `'driver' => 'geohash'` or per model:
+
+   ```php
+   protected string $geolocationDriver = 'geohash';
+   protected string $geohashColumn = 'hash'; // optional, defaults to "geohash"
+   ```
+
+While a model uses the geohash driver, saving it keeps the column in sync. Rows
+changed without model events (`Model::query()->update()`, `insert()`, raw SQL,
+imports) keep their old hash and are not seen as moved, so run the command
+after bulk changes. Rows with coordinates but no hash are still found; when more
+than `geohash.null_limit` of them exist, the search uses the `sql` driver. The
+`sql` driver also runs for a very large radius, near a pole and across the
+antimeridian. A model that uses the driver but has no column saves as before and throws a
+`LogicException` when it is searched.
+
+A moved row whose hash was not updated is silently left out of results until the
+command repairs it, so treat a bulk write to the coordinates as a reason to run it.
+Switching an existing table to the driver needs a first backfill, and nothing warns
+you until the `null_limit` fallback kicks in. After you add the column with a
+migration, a worker that already saw it missing waits up to a minute before it
+hashes saved rows, so restart workers or run the command after deploying.
+
+Each search outside `nearest()` also runs one extra counting query for the rows
+without a hash, before the real query.
+
+Rows without a hash cost something on every search: the query also has to read
+each row whose hash is `NULL`, including rows with no coordinates at all, so a
+table where most rows have no location pays a cost that grows with that count.
+`nearest()` pays it once per round.
+
 ### Laravel Boost
 
 The package ships [Laravel Boost](https://laravel.com/docs/boost) guidelines and a
@@ -148,7 +213,8 @@ to load them into your AI coding assistant.
 | Key | Default | Description |
 |-----|---------|-------------|
 | `search_by` | `km` | `km` or `mile`. Applies to `distance` and to every radius. |
-| `driver` | `sql` | The search driver. |
+| `driver` | `sql` | The search driver: `sql` or `geohash`. |
+| `geohash.null_limit` | `1000` | With the `geohash` driver, the most rows without a hash a search tolerates before it uses the `sql` driver. |
 | `nearest.initial_radius` | `1` | Radius of the first `nearest()` round, in the configured unit. |
 | `nearest.max_radius` | `null` | Where `nearest()` stops widening. `null` means the whole globe. |
 
@@ -177,6 +243,10 @@ returns enough rows, which makes the result exact.
 A B-tree index narrows well on latitude only, so when most of a very large
 table sits in one region the latitude band can still hold many rows. See
 [BENCHMARKS.md](BENCHMARKS.md) for measurements.
+
+The opt-in `geohash` driver instead picks the longest geohash prefix whose cell is
+at least as large as the radius, and looks up that cell and its eight neighbours
+as index ranges, then applies the same exact distance check.
 
 On SQLite the `radians`, `cos`, `sin`, `asin` and `sqrt` functions must be
 registered on the PDO connection (see `tests/TestCase.php` for an example).

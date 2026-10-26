@@ -43,6 +43,11 @@ final class Nearest
         $ceiling = $this->ceiling(Haversine::unit());
         $radius = min($initial, $ceiling);
 
+        return SearchMemo::scope(fn () => $this->search($radius, $ceiling));
+    }
+
+    private function search(float $radius, float $ceiling): Model|Collection|null
+    {
         while (true) {
             // The caller's ordering and paging would change which rows count as
             // the nearest, so each round starts without them.
