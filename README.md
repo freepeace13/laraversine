@@ -185,6 +185,16 @@ than `geohash.null_limit` of them exist, the search uses the `sql` driver. The
 antimeridian. A model that uses the driver but has no column saves as before and throws a
 `LogicException` when it is searched.
 
+A moved row whose hash was not updated is silently left out of results until the
+command repairs it, so treat a bulk write to the coordinates as a reason to run it.
+Switching an existing table to the driver needs a first backfill, and nothing warns
+you until the `null_limit` fallback kicks in. After you add the column with a
+migration, a worker that already saw it missing waits up to a minute before it
+hashes saved rows, so restart workers or run the command after deploying.
+
+Each search outside `nearest()` also runs one extra counting query for the rows
+without a hash, before the real query.
+
 Rows without a hash cost something on every search: the query also has to read
 each row whose hash is `NULL`, including rows with no coordinates at all, so a
 table where most rows have no location pays a cost that grows with that count.

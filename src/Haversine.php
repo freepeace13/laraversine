@@ -60,6 +60,8 @@ final class Haversine
     /**
      * Select the distance and keep only rows within $radius of the origin.
      * This is the exact check every search driver finishes with.
+     *
+     * @internal Not covered by semver; custom drivers should not depend on it.
      */
     public static function applyExact(Builder $query, Coordinates $origin, float $radius, string $unit): void
     {
@@ -78,6 +80,8 @@ final class Haversine
      * A float as an inlined SQL literal. Radius and bounding-box bounds are
      * inlined (they are typed floats) because PDO would bind them as strings,
      * which SQLite compares as greater than any number.
+     *
+     * @internal Not covered by semver; custom drivers should not depend on it.
      */
     public static function literal(float $value): string
     {

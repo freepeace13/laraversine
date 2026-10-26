@@ -12,9 +12,12 @@ use Laraversine\SearchMemo;
 /**
  * Narrows candidates with prefix ranges on a stored geohash column, then
  * finishes with the exact haversine check. Rows with coordinates but no hash
- * stay candidates, so a stale column never hides a nearby row; when there are
+ * stay candidates, so a missing hash never hides a nearby row; when there are
  * too many of them, and for searches the cover cannot handle reliably, the
  * fallback driver runs instead.
+ *
+ * A row moved without model events keeps its old, non-NULL hash and can be
+ * missed until `laraversine:geohash` repairs it; nothing checks that at search time.
  */
 final class GeohashDriver implements SearchDriver
 {
