@@ -78,7 +78,7 @@ final class Geohash
      */
     public static function isValid(string $hash, ?int $length = null): bool
     {
-        return preg_match('/^[0-9b-hjkmnp-z]+$/', $hash) === 1 && ($length === null || strlen($hash) === $length);
+        return preg_match('/^[0-9b-hjkmnp-z]+\z/', $hash) === 1 && ($length === null || strlen($hash) === $length);
     }
 
     /**

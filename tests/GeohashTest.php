@@ -136,6 +136,7 @@ final class GeohashTest extends TestCase
         $this->assertTrue(Geohash::isValid('ezs42'));
         $this->assertTrue(Geohash::isValid(Geohash::encode(7.1, 125.6), Geohash::LENGTH));
         $this->assertFalse(Geohash::isValid('ezs42', Geohash::LENGTH));
+        $this->assertFalse(Geohash::isValid("ezs42\n"));
         $this->assertFalse(Geohash::isValid('ezs4a'));
         $this->assertFalse(Geohash::isValid('EZS42'));
         $this->assertFalse(Geohash::isValid(''));

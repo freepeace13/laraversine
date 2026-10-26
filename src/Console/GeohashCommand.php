@@ -23,10 +23,15 @@ final class GeohashCommand extends Command
      */
     private const ROUNDING_TOLERANCE = 1e-6;
 
+    /**
+     * A batch binds about three parameters per row, and PostgreSQL stops at 65535.
+     */
+    private const MAX_CHUNK = 10000;
+
     protected $signature = 'laraversine:geohash
         {model : The model class, for example App\\Models\\Store}
         {--verify : Report missing or stale geohashes without writing}
-        {--chunk=1000 : Rows read per batch}';
+        {--chunk=1000 : Rows read per batch, at most 10000}';
 
     protected $description = 'Backfill or verify the geohash column of a model';
 
@@ -57,7 +62,7 @@ final class GeohashCommand extends Command
 
         $model->newQueryWithoutScopes()
             ->select([$key, $model->getLatitudeColumn(), $model->getLongitudeColumn(), $model->getGeohashColumn()])
-            ->chunkById(max(1, (int) $this->option('chunk')), function ($rows) use ($model, $verify, &$mismatched, &$total, &$count) {
+            ->chunkById(min(self::MAX_CHUNK, max(1, (int) $this->option('chunk'))), function ($rows) use ($model, $verify, &$mismatched, &$total, &$count) {
                 $pending = [];
 
                 foreach ($rows as $row) {
