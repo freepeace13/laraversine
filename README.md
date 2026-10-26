@@ -16,7 +16,7 @@ in SQL, with no PostGIS or spatial extension required.
 - Kilometres or miles
 - MySQL, MariaDB, PostgreSQL and SQLite
 - Composable Eloquent scopes: chain with `where`, `paginate`, `with`, etc.
-- Pluggable search drivers
+- Pluggable search drivers: `sql` (default), opt-in `geohash`, or your own
 
 **See it in action:** [laraversine-demo](https://github.com/freepeace13/laraversine-demo),
 a one-page Laravel app with a radius slider, a km/mile toggle and a Leaflet map.
@@ -123,6 +123,15 @@ setup. Choose another globally with `config('laraversine.driver')`, or per model
 ```php
 protected string $geolocationDriver = 'my-driver';
 ```
+
+| Driver | Name | What it does | Needs |
+|--------|------|--------------|-------|
+| SQL (default) | `sql` | Adds a latitude/longitude bounding box as a pre-filter, then runs the exact haversine check. | Nothing. |
+| Geohash (opt-in) | `geohash` | Narrows candidates with prefix ranges on a stored geohash column, then runs the exact haversine check. Falls back to `sql` when it cannot cover the search. | A geohash column, kept in sync on save. |
+| Custom | any name you register | Your own `SearchDriver`, added with `Laraversine::extend()`. | An exact distance check as its last step. |
+
+Every driver ends with the exact haversine check, so they all return the same rows.
+They differ only in how they narrow the candidates first.
 
 Register your own by implementing `Laraversine\Contracts\SearchDriver`:
 
