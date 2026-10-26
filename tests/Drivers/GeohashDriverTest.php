@@ -174,6 +174,20 @@ final class GeohashDriverTest extends TestCase
     }
 
     #[Test]
+    public function the_null_probe_keeps_the_callers_or_conditions_grouped(): void
+    {
+        $this->nullLimit(2);
+
+        // Hashed rows only, so no row the query could return is missing a hash.
+        DatasetFactory::seed(DatasetFactory::cluster(30, 6, 7.1, 125.6, 0.05), true);
+        Destination::query()->update(['name' => 'tenant-b']);
+
+        $sql = Destination::where('name', 'tenant-b')->orWhere('name', 'zzz')->nearby([7.1, 125.6], 3.0)->toRawSql();
+
+        $this->assertStringContainsString('geohash', $sql);
+    }
+
+    #[Test]
     public function nearest_runs_the_null_probe_once_for_all_its_rounds(): void
     {
         DatasetFactory::seed([['name' => 'lonely', 'latitude' => -45.0, 'longitude' => 170.0]], true);

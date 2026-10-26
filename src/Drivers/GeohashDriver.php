@@ -56,9 +56,19 @@ final class GeohashDriver implements SearchDriver
         $model = $query->getModel();
 
         $probe = (clone $query)->applyScopes()->getQuery()
-            ->cloneWithout(['columns', 'orders', 'groups', 'havings', 'limit', 'offset', 'unions'])
-            ->cloneWithoutBindings(['select', 'order', 'groupBy', 'having', 'union'])
-            ->select($model->qualifyColumn($model->getKeyName()))
+            ->cloneWithout(['columns', 'orders', 'groups', 'havings', 'limit', 'offset', 'unions', 'unionLimit', 'unionOffset', 'unionOrders'])
+            ->cloneWithoutBindings(['select', 'order', 'groupBy', 'having', 'union', 'unionOrder']);
+
+        // Group the caller's wheres, so an orWhere in them cannot take over the
+        // conditions added below.
+        $callers = $probe->forNestedWhere();
+        $callers->wheres = $probe->wheres;
+        $callers->setBindings($probe->getRawBindings()['where'], 'where');
+        $probe->wheres = [];
+        $probe->setBindings([], 'where');
+        $probe->addNestedWhereQuery($callers);
+
+        $probe->select($model->qualifyColumn($model->getKeyName()))
             ->whereNull($model->getQualifiedGeohashColumn())
             ->whereNotNull($model->getQualifiedLatitudeColumn())
             ->whereNotNull($model->getQualifiedLongitudeColumn())
