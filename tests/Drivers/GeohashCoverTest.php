@@ -6,6 +6,7 @@ use Laraversine\Coordinates;
 use Laraversine\Distance;
 use Laraversine\Drivers\GeohashCover;
 use Laraversine\Geohash;
+use Laraversine\Haversine;
 use Laraversine\Test\Support\BruteForce;
 use Laraversine\Test\Support\DatasetFactory;
 use PHPUnit\Framework\Attributes\Test;
@@ -93,6 +94,44 @@ final class GeohashCoverTest extends TestCase
                     $covered = array_filter($cover->ranges, fn (array $range) => $hashes[$id] >= $range[0] && $hashes[$id] <= $range[1]);
 
                     $this->assertNotEmpty($covered, "row {$id} within {$radius} km of ".json_encode([$origin['latitude'], $origin['longitude']]));
+                    $checked++;
+                }
+            }
+        }
+
+        $this->assertGreaterThan(100, $checked);
+    }
+
+    #[Test]
+    public function origins_on_cell_corners_still_cover_every_point_within_the_radius(): void
+    {
+        $checked = 0;
+
+        foreach ([4, 5, 6, 7] as $precision) {
+            [$minLat, $maxLat, $minLng, $maxLng] = Geohash::bounds(Geohash::encode(7.1, 125.6, $precision));
+            [$height, $width] = Geohash::cellSize($precision);
+
+            // The widest radius this precision allows, shrunk a little: the cover is stretched to its limit.
+            $radius = 0.95 * min($height, $width * cos(deg2rad(abs($maxLat) + $height))) * M_PI / 180 * Haversine::EARTH_RADIUS_KM;
+
+            foreach ([[$minLat, $minLng], [$maxLat, $maxLng], [$minLat, $maxLng], [$maxLat, $minLng]] as $corner) {
+                $rows = DatasetFactory::cluster(1500, $precision, $corner[0], $corner[1], 2 * max($height, $width));
+                $stored = [];
+                $hashes = [];
+
+                foreach ($rows as $id => $row) {
+                    $stored[] = ['id' => $id, 'latitude' => $row['latitude'], 'longitude' => $row['longitude']];
+                    $hashes[$id] = Geohash::encode($row['latitude'], $row['longitude']);
+                }
+
+                $cover = GeohashCover::around(new Coordinates($corner[0], $corner[1]), $radius, Distance::KM);
+
+                $this->assertNotNull($cover, "precision {$precision} corner ".json_encode($corner));
+
+                foreach (array_keys(BruteForce::within($stored, $corner, $radius)) as $id) {
+                    $covered = array_filter($cover->ranges, fn (array $range) => $hashes[$id] >= $range[0] && $hashes[$id] <= $range[1]);
+
+                    $this->assertNotEmpty($covered, "row {$id}, precision {$precision}, corner ".json_encode($corner));
                     $checked++;
                 }
             }
