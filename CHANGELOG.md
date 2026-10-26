@@ -2,6 +2,21 @@
 
 All notable changes to `freepeace13/laraversine` are documented here.
 
+## [2.1.0](https://github.com/freepeace13/laraversine/compare/v2.0.0...v2.1.0) (2026-10-26)
+
+
+### Features
+
+* add an opt-in geohash search driver ([#57](https://github.com/freepeace13/laraversine/issues/57)) ([add78a1](https://github.com/freepeace13/laraversine/commit/add78a11f7c4d4f1d67c7fa5ed6d7e1cc1c6bab1))
+
+
+### Miscellaneous Chores
+
+* merge 1.x into 2.x ([f476b66](https://github.com/freepeace13/laraversine/commit/f476b6623910a4d41b5de915bc4074f19127ddfb))
+* merge 1.x into 2.x ([543214d](https://github.com/freepeace13/laraversine/commit/543214d946f95fe89fe8e80cfd0ad8370b388651))
+* merge 1.x into 2.x ([b7e1ae2](https://github.com/freepeace13/laraversine/commit/b7e1ae225961a0ec9d00940c6630a61595836eb6))
+* merge 1.x into 2.x ([f8f3174](https://github.com/freepeace13/laraversine/commit/f8f3174be2985dce09b3f40bccae522aca88ed38))
+
 ## [2.0.0](https://github.com/freepeace13/laraversine/compare/v1.1.0...v2.0.0) (2026-10-22)
 
 
