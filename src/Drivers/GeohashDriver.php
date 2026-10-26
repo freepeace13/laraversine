@@ -38,11 +38,12 @@ final class GeohashDriver implements SearchDriver
 
         $clauses = array_fill(0, count($cover->ranges), "{$column} BETWEEN ? AND ?");
 
-        // The coordinate checks keep rows without coordinates out: PostgreSQL's
-        // LEAST ignores NULL arguments, which would turn them into matches.
-        $clauses[] = "({$column} IS NULL AND {$lat} IS NOT NULL AND {$lng} IS NOT NULL)";
+        $clauses[] = "{$column} IS NULL";
 
-        return $query->whereRaw('('.implode(' OR ', $clauses).')', array_merge(...$cover->ranges));
+        // The coordinate checks cover every branch, not only the NULL hash: a
+        // row moved to NULL coordinates without the hook keeps its old hash, and
+        // PostgreSQL's LEAST ignores NULL arguments, which would turn it into a match.
+        return $query->whereRaw("{$lat} IS NOT NULL AND {$lng} IS NOT NULL AND (".implode(' OR ', $clauses).')', array_merge(...$cover->ranges));
     }
 
     /**

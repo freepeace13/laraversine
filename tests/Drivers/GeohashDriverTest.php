@@ -41,6 +41,17 @@ final class GeohashDriverTest extends TestCase
     }
 
     #[Test]
+    public function it_excludes_hashed_rows_whose_coordinates_were_nulled(): void
+    {
+        $kept = GeohashStore::create(['name' => 'kept', 'lat' => 7.1, 'lng' => 125.6]);
+        $nulled = GeohashStore::create(['name' => 'nulled', 'lat' => 7.1, 'lng' => 125.6]);
+
+        DB::table('stores')->where('id', $nulled->id)->update(['lat' => null]);
+
+        $this->assertSame([$kept->id], GeohashStore::nearby([7.1, 125.6], 300)->pluck('id')->all());
+    }
+
+    #[Test]
     public function it_uses_miles_when_configured(): void
     {
         config(['laraversine.search_by' => 'mile']);
