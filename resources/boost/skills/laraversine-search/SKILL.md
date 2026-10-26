@@ -47,6 +47,16 @@ $store->distance()->unit;    // 'km' or 'mile'
 
 Use `distance()`, not `$store->distance`: the property throws `LogicException` when the column was not loaded.
 
+## Drivers
+
+| Driver | Name | How it narrows rows | Needs |
+|---|---|---|---|
+| SQL (default) | `sql` | Latitude/longitude bounding box | Nothing |
+| Geohash (opt-in) | `geohash` | Prefix ranges on a stored geohash column; falls back to `sql` when it cannot cover the search | Nullable indexed `geohash` column, filled by `php artisan laraversine:geohash "App\Models\Store"` |
+| Custom | your name | Your `SearchDriver`, registered with `Laraversine::extend()` | An exact haversine check as the last step |
+
+Select with `config('laraversine.driver')` or `protected string $geolocationDriver`. Every driver returns the same rows; `geohash` was not faster than `sql` in the benchmarks, so do not suggest it as a speed-up without measuring.
+
 ## Pitfalls
 
 - `nearestFirst()` before `nearby()` throws `LogicException`.
